@@ -13,8 +13,7 @@ body:
         Thank you for suggesting a quickstart for publication on redhat(dot)com!
 
         Please complete the fields below and leave checkboxes unchecked.
-
-
+  - type: input
     id: repo_link
     attributes:
       label: Quickstart repository link
@@ -28,7 +27,6 @@ body:
       label: Summary
       description: (Optional) Briefly describe why this quickstart should be prioritized for publication
       placeholder: "Explain the quickstart's purpose, target audience, impact and why it's needed."
-
   - type: checkboxes
     id: readiness
     attributes:
