@@ -1,0 +1,41 @@
+name: "Publication suggestion"
+description: "Suggest an AI quickstart for publication on redhat(dot)com"
+title: "[pub suggestion]: <insert descriptive title here>"
+labels:
+  - publication_suggestion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Publication suggestion
+
+        Thank you for suggesting a quickstart for publication on redhat(dot)com!
+        Please complete the fields below
+
+        ---
+        ### Quickstart publication readiness checklist
+        - [ ] README is clear, concise, and free of typos
+        - [ ] README is accurate and includes vertical use case
+        - [ ] README is complete and follows template structure
+        - [ ] Quickstart runs end-to-end without errors and is reproducible
+        - [ ] Insert redhat(dot)com requirements here
+        - [ ] Technical review complete
+        - [ ] Peer review complete
+        - [ ] Known issues and requests are documented (or resolved)
+        ---
+
+  - type:
+    id: repo_link
+    attributes:
+      label: Quickstart repository link
+      description: Paste a link to the quickstart repository you recommend to publish
+      placeholder: "https://github.com/rh-ai-quickstart/best-quickstart-ever"
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: (Optional) Briefly describe why this quickstart should be prioritized for publication
+      placeholder: "Explain the quickstart's purpose, target audience, impact and why it's needed."
+
+      
