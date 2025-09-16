@@ -5,6 +5,7 @@ labels:
   - publication_suggestion
 body:
   - type: markdown
+    id: summary
     attributes:
       value: |
         ## Publication suggestion
@@ -23,14 +24,14 @@ body:
         - [ ] Peer review complete
         - [ ] Known issues and requests are documented (or resolved)
         ---
-
   - type:
     id: repo_link
     attributes:
       label: Quickstart repository link
       description: Paste a link to the quickstart repository you recommend to publish
       placeholder: "https://github.com/rh-ai-quickstart/best-quickstart-ever"
-
+    validations:
+      required: true
   - type: textarea
     id: summary
     attributes:
