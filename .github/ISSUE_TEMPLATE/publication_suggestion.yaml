@@ -33,7 +33,7 @@ body:
       label: Publication readiness checklist
       options:
         - label: README is clear, concise, and free of typos
-        - label: https://github.com/rh-ai-quickstart/ai-quickstart-pub
+        - label: README is accurate and includes vertical use case
         - label: README is complete and follows template structure
         - label: Quickstart runs end-to-end without errors and is reproducible
         - label: Insert redhat(dot)com requirements here
