@@ -24,7 +24,7 @@ body:
         - [ ] Peer review complete
         - [ ] Known issues and requests are documented (or resolved)
         ---
-  - type:
+  - type: input
     id: repo_link
     attributes:
       label: Quickstart repository link
