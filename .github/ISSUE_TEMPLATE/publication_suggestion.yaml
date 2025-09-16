@@ -11,20 +11,10 @@ body:
         ## Publication suggestion
 
         Thank you for suggesting a quickstart for publication on redhat(dot)com!
-        Please complete the fields below
 
-        ---
-        ### Quickstart publication readiness checklist
-        - [ ] README is clear, concise, and free of typos
-        - [ ] README is accurate and includes vertical use case
-        - [ ] README is complete and follows template structure
-        - [ ] Quickstart runs end-to-end without errors and is reproducible
-        - [ ] Insert redhat(dot)com requirements here
-        - [ ] Technical review complete
-        - [ ] Peer review complete
-        - [ ] Known issues and requests are documented (or resolved)
-        ---
-  - type: input
+        Please complete the fields below and leave checkboxes unchecked.
+
+
     id: repo_link
     attributes:
       label: Quickstart repository link
@@ -39,4 +29,16 @@ body:
       description: (Optional) Briefly describe why this quickstart should be prioritized for publication
       placeholder: "Explain the quickstart's purpose, target audience, impact and why it's needed."
 
-      
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Publication readiness checklist
+      options:
+        - label: README is clear, concise, and free of typos
+        - label: https://github.com/rh-ai-quickstart/ai-quickstart-pub
+        - label: README is complete and follows template structure
+        - label: Quickstart runs end-to-end without errors and is reproducible
+        - label: Insert redhat(dot)com requirements here
+        - label: Technical review complete
+        - label: Peer review complete
+        - label: Known issues and requests are documented (or resolved)
