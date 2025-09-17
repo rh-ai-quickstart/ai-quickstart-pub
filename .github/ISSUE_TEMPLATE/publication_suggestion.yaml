@@ -1,7 +1,7 @@
 name: "Publication suggestion"
 description: "Suggest an AI quickstart for publication on redhat(dot)com"
 title: "[pub suggestion]: <insert descriptive title here>"
-labels:
+labels: 
   - publication_suggestion
 body:
   - type: markdown
