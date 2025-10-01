@@ -1,5 +1,7 @@
 name: "Pull Request Template"
 description: "Checklist for contributors when submitting quickstart publication requests"
+assignees:
+  - @publication-admin
 body:
   - type: markdown
     id: summary
