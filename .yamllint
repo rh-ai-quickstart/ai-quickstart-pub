@@ -1,0 +1,35 @@
+---
+extends: default
+
+rules:
+  # Allow longer lines for readability in GitHub workflows and templates
+  line-length:
+    max: 120
+    level: warning
+
+  # GitHub issue templates don't require document-start markers (---)
+  document-start: disable
+
+  # Allow flexible indentation in GitHub templates
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Relax truthy value checking (on/off are valid in GitHub workflows)
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off']
+    check-keys: false
+
+  # Allow comments without strict indentation rules
+  comments-indentation: disable
+
+  # Allow empty values in GitHub templates
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+ignore: |
+  .git/
+  node_modules/
+  venv/
+  .github/workflows/yamllint.yml
