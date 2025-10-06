@@ -1,0 +1,62 @@
+---
+# Test YAML file with intentional yamllint errors
+
+name: "Test Workflow"
+description: This file contains various yamllint violations
+
+# Error 1: Inconsistent indentation (should be 2 spaces)
+jobs:
+   build:    # 3 spaces instead of 2
+      name: Test   # 6 spaces instead of 4
+    runs-on: ubuntu-latest   # back to 4 spaces - inconsistent!
+
+# Error 2: Trailing spaces after values
+invalid_trailing_spaces: "value with trailing spaces"
+
+# Error 3: Too many spaces before colon
+bad_spacing   : value
+
+# Error 4: No space after colon
+no_space:value
+
+# Error 5: Line too long (over 120 characters limit)
+very_long_line: "This is an intentionally very long line that exceeds the 120 character limit configured in the yamllint settings and should trigger a warning"
+
+# Error 6: Duplicate keys
+duplicate_key: "first value"
+duplicate_key: "second value"
+
+# Error 7: Wrong indentation in list
+my_list:
+- item1
+  - item2  # should be at same level or properly nested
+- item3
+
+# Error 8: Tabs instead of spaces (if your editor supports it)
+# The line below uses a tab character
+	tab_indented: value
+
+# Error 9: Multiple blank lines (more than allowed)
+
+
+
+excessive_blank_lines: above
+
+# Error 10: Incorrect boolean values (if truthy rule was strict)
+# Note: This might not fail with our relaxed config
+# strict_boolean: yes
+
+# Error 11: Missing space in flow sequence
+flow_sequence: [item1,item2,item3]
+
+# Error 12: Improper key-value spacing in flow mapping
+flow_mapping: {key1:value1, key2 :value2}
+
+# Valid section for comparison
+valid_section:
+  properly_indented: true
+  correct_spacing: "value"
+  good_list:
+    - item_one
+    - item_two
+    - item_three

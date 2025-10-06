@@ -1,0 +1,44 @@
+---
+# Test file for spellcheck with intentional spelling errors
+
+name: "Test Spellcheck Workflow"
+description: "This file contains intentional spelling errors to test the spellcheck GitHub Action"
+
+# Section 1: Spelling Errors in Descriptions
+metadata:
+  summary: "This is a simpel example of a spelling mistake"
+  purpose: "The quickstart should be publiched on the redhat website"
+  recommendation: "We need to recomend this for publcation"
+  documentation: "The doccumentation needs to be reviewd by the team"
+
+# Section 2: More Spelling Errors
+testing:
+  issue: "This occured during the seperate testing phase"
+  environment: "The enviroment was not configured corectly"
+  performance: "We need to acheive better performence metrics"
+  implementation: "The recieve function has a wierd implementation"
+
+# Section 3: Additional Errors
+validation:
+  check: "Please definately check the refference guide"
+  compliance: "The acessibility features are necesary for compliance"
+  approximation: "This has approximatley twenty errors"
+  reason: "Should be ignored becuase they are in the wordlist"
+
+# Section 4: Correctly Spelled Technical Terms (in wordlist)
+technical_terms:
+  - quickstart
+  - redhat
+  - OpenShift
+  - README
+  - Github
+  - repo
+  - MIST
+  - checkboxes
+  - yaml
+  - yml
+  - AI
+
+# Summary comment with more errors
+# This file has intentional mispellings to verfiy the spellcheck
+# action is working corectly and catching erors in YAML files
