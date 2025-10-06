@@ -1,0 +1,4 @@
+CLAUDE.md
+*.claude*
+!.spellcheck.yml
+!.wordlist.txt
