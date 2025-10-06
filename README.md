@@ -1,2 +1,2 @@
 # ai-quickstart-pub
-render red hat ai quickstarts 
+render Red Hat AI Quickstarts 

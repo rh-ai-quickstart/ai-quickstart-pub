@@ -17,3 +17,6 @@ CODEOWNERS
 yml
 yaml
 md
+rojopolis
+ubuntu
+https
