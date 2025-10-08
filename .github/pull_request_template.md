@@ -14,4 +14,6 @@ Thank you for suggesting a quickstart for publication on redhat(dot)com! Please 
 - [ ] Insert redhat(dot)com requirements here
 - [ ] Technical review complete
 - [ ] Peer review complete
+- [ ] Marketing review complete (accurately convey purpose of quickstart ->
+      demo, not production-ready code supported by RH)
 - [ ] Known issues and requests are documented (or resolved)
