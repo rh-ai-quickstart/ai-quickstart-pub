@@ -3,8 +3,6 @@
 Thank you for suggesting a quickstart for publication on redhat(dot)com! Please complete the sections below fields so reviewers have enough context and leave checkboxes unchecked.
 
 ## Summary 
-[Below this line, briefly describe why this quickstart should be prioritized for publication. What's its purpose, target audience and industry, potential impact, and why it's needed."]
-
 <!-- Below this line, briefly describe why this quickstart should be prioritized for publication. What's its purpose, target audience and industry, potential impact, and why it's needed." -->
 
 ## Publication readiness checklist
