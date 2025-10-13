@@ -1,0 +1,3 @@
+[submodule "quickstart/llm-cpu-serving"]
+	path = quickstart/llm-cpu-serving
+	url = https://github.com/rh-ai-quickstart/llm-cpu-serving.git
