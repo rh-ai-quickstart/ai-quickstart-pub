@@ -4,3 +4,6 @@
 [submodule "quickstart/lls-observability"]
 	path = quickstart/lls-observability
 	url = https://github.com/rh-ai-quickstart/lls-observability.git
+[submodule "quickstart/my-quickstart"]
+	path = quickstart/my-quickstart
+	url = https://github.com/rh-ai-quickstart/openshift-ai-observability-summarizer.git
