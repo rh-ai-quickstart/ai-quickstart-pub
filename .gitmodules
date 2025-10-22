@@ -7,3 +7,6 @@
 [submodule "quickstart/product-recommender-system"]
 	path = quickstart/product-recommender-system
 	url = https://github.com/rh-ai-quickstart/product-recommender-system.git
+[submodule "quickstart/openshift-ai-observability-summarizer"]
+	path = quickstart/openshift-ai-observability-summarizer
+	url = https://github.com/rh-ai-quickstart/openshift-ai-observability-summarizer.git
