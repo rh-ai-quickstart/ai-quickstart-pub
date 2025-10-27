@@ -4,6 +4,9 @@
 [submodule "quickstart/lls-observability"]
 	path = quickstart/lls-observability
 	url = https://github.com/rh-ai-quickstart/lls-observability.git
+[submodule "quickstart/guardrailing-llms"]
+	path = quickstart/guardrailing-llms
+	url = https://github.com/rh-ai-quickstart/guardrailing-llms.git
 [submodule "quickstart/product-recommender-system"]
 	path = quickstart/product-recommender-system
 	url = https://github.com/rh-ai-quickstart/product-recommender-system.git
