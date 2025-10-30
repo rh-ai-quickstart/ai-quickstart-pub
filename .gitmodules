@@ -1,6 +1,9 @@
 [submodule "quickstart/llm-cpu-serving"]
 	path = quickstart/llm-cpu-serving
 	url = https://github.com/rh-ai-quickstart/llm-cpu-serving.git
+[submodule "quickstart/RAG"]
+	path = quickstart/RAG
+	url = https://github.com/rh-ai-quickstart/RAG.git
 [submodule "quickstart/lls-observability"]
 	path = quickstart/lls-observability
 	url = https://github.com/rh-ai-quickstart/lls-observability.git
