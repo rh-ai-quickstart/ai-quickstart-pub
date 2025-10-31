@@ -1,9 +1,21 @@
 [submodule "quickstart/llm-cpu-serving"]
 	path = quickstart/llm-cpu-serving
 	url = https://github.com/rh-ai-quickstart/llm-cpu-serving.git
+[submodule "quickstart/RAG"]
+	path = quickstart/RAG
+	url = https://github.com/rh-ai-quickstart/RAG.git
 [submodule "quickstart/lls-observability"]
 	path = quickstart/lls-observability
 	url = https://github.com/rh-ai-quickstart/lls-observability.git
 [submodule "quickstart/ai-virtual-agent"]
 	path = quickstart/ai-virtual-agent
 	url = https://github.com/rh-ai-quickstart/ai-virtual-agent.git
+[submodule "quickstart/guardrailing-llms"]
+	path = quickstart/guardrailing-llms
+	url = https://github.com/rh-ai-quickstart/guardrailing-llms.git
+[submodule "quickstart/product-recommender-system"]
+	path = quickstart/product-recommender-system
+	url = https://github.com/rh-ai-quickstart/product-recommender-system.git
+[submodule "quickstart/openshift-ai-observability-summarizer"]
+	path = quickstart/openshift-ai-observability-summarizer
+	url = https://github.com/rh-ai-quickstart/openshift-ai-observability-summarizer.git
