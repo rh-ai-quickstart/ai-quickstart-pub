@@ -19,3 +19,6 @@
 [submodule "quickstart/openshift-ai-observability-summarizer"]
 	path = quickstart/openshift-ai-observability-summarizer
 	url = https://github.com/rh-ai-quickstart/openshift-ai-observability-summarizer.git
+[submodule "quickstart/it-self-service-agent"]
+	path = quickstart/it-self-service-agent
+	url = https://github.com/rh-ai-quickstart/it-self-service-agent.git
