@@ -12,6 +12,7 @@ Thank you for suggesting a quickstart for publication on redhat(dot)com! Please 
 - [ ] Quickstart runs end-to-end without errors and is reproducible
 - [ ] Titles, descriptions, and tags adhere to MIST guidelines <!-- add this step here? -->
 - [ ] Insert redhat(dot)com requirements here
+- [ ] Confirm markdown links use accessible "alt text" descriptions
 - [ ] Technical review complete
 - [ ] Peer review complete
 - [ ] Marketing review complete (accurately convey purpose of quickstart ->
