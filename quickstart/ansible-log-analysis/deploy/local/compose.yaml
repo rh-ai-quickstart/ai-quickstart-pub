@@ -1,0 +1,294 @@
+networks:
+  alm:
+
+services:
+  loki-mcp-server:
+    image: quay.io/rh-ai-quickstart/alm-loki-mcp-server:query-direction-support
+    container_name: loki-mcp-server
+    ports:
+      - "8081:8080"  # Changed host port to 8081 to avoid conflict with alm-embedding
+    environment:
+      - LOKI_URL=http://loki:3100
+      - PORT=8080
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  loki:
+    image: grafana/loki:3.6.2
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki/local-config.yaml:/etc/loki/local-config.yaml:z
+      - loki_data:/loki    # Persistent storage for chunks/indexes
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - alm
+    healthcheck:
+      # Loki minimal image doesn't have shell tools (no sh, wget, curl, etc.)
+      # Use the Loki binary itself to verify the container is functional
+      # This checks that the binary is accessible and can execute
+      # Note: This doesn't check HTTP readiness, but verifies the service is running
+      test: ["CMD", "/usr/bin/loki", "-version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Give Loki time to fully initialize (can take 30-60s)
+
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+        reservations:
+          memory: 2g
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_FEATURE_TOGGLES_ENABLE=alertingSimplifiedRouting,alertingQueryAndExpressionsStepMode
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - alm
+  
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "6006:6006"  # UI and OTLP HTTP collector
+      - "4317:4317"  # OTLP gRPC collector
+    networks:
+      - alm
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/logsdb # we dont use DATABASE_URL becuase it point to localhost, and the backend server isnt in the same network as phoenix.
+  promtail:
+    image: grafana/promtail:latest
+    user: "root"
+    # privileged required for Docker socket access on macOS Docker Desktop
+    privileged: true
+    volumes:
+      # NOTE: :z suffix is for SELinux (RHEL/Fedora/CentOS)
+      # macOS users: remove :z if you get "lsetxattr: operation not supported" error
+      - ./config/promtail/promtail-local-config.yaml:/etc/promtail/config.yaml:z
+      # Container socket - auto-detected by Makefile (CONTAINER_SOCK env var)
+      # Falls back to Docker socket if not set
+      - ${CONTAINER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
+      # TODO: Remove this when we have a way to collect logs from aap-mock container (work in progress)
+      # Mount ansible logs directory (read-only)
+      - ../../data/logs:/var/log/ansible_logs:ro,z
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - alm
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  aap-mock:
+    # Use pre-built image from Quay.io (recommended)
+    image: quay.io/ecosystem-appeng/aap-mock:latest
+    # Option: Build locally (uncomment below, comment out image above)
+    # build:
+    #   context: ../../../aap-log-generator
+    #   dockerfile: Dockerfile
+    container_name: aap-mock
+    ports:
+      - "8082:8080"  # Expose on 8082 (8081 used by loki-mcp-server)
+    environment:
+      - PORT=8080
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - aap_mock_data:/data
+      - aap_mock_logs:/var/log/aap-mock
+      # Pre-load with flattened logs from .staging/sample-logs/ (created by make prepare-logs)
+      # NOTE: :z suffix is for SELinux (RHEL/Fedora/CentOS)
+      # macOS users: remove ,z if you get "lsetxattr: operation not supported" error
+      - ../../data/logs/failed:/app/sample-logs:ro,z
+    networks:
+      - alm
+    # Memory limit for file loading (500 files with events needs ~3-4GB)
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # Give time to load 500 files before health checks
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15  # PostgreSQL with pgvector extension
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=logsdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - alm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d logsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: Containerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../clustering_model.joblib:/app/clustering_model.joblib
+    networks:
+      - alm
+    depends_on:
+      postgres:
+        condition: service_healthy
+      alm-embedding:
+        condition: service_healthy
+      alm-rag:
+        condition: service_started  # RAG service can start before embeddings are ready
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../../ui
+      dockerfile: Containerfile
+    ports:
+      - "7860:7860"  # Gradio default port
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-http://backend:8000}
+    networks:
+      - alm
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://frontend:7860"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  alm-embedding:
+    image: quay.io/rh-ai-quickstart/alm-rag:tei-rag-v1
+    container_name: alm-embedding
+    # Entrypoint is already set to text-embeddings-router in the image
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_ID=nomic-ai/nomic-embed-text-v1.5
+      - HF_HOME=/data
+      - PORT=8080
+      - MAX_CLIENT_BATCH_SIZE=32
+      - MAX_BATCH_TOKENS=8192
+    networks:
+      - alm
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s  # Model loading can take 3+ minutes
+    # Note: This service requires significant memory (8Gi recommended)
+    # Adjust resources based on your system capabilities
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # MinIO Console port
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_SERVER_URL=http://minio:9000
+    command: server /data --console-address ":9001"
+    networks:
+      - alm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - minio_data:/data
+
+  alm-rag:
+    build:
+      context: ../..
+      dockerfile: services/rag/Containerfile
+    container_name: alm-rag
+    ports:
+      - "8002:8002"
+    environment:
+      # MinIO configuration (for RAG index storage)
+      # Note: Inside Docker, use 'minio' service name, not 'localhost'
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - RAG_BUCKET_NAME=rag-index
+      # Embedding service
+      - EMBEDDINGS_LLM_URL=http://alm-embedding:8080
+      - RAG_MODEL_NAME=nomic-ai/nomic-embed-text-v1.5
+      - PORT=8002
+    networks:
+      - alm
+    depends_on:
+      alm-embedding:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      # Note: RAG service will wait for index to be ready in MinIO
+      # In local dev, you may need to run init job first to create the index
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s  # Service starts immediately, but index may take time to load
+
+volumes:
+  postgres_data:
+  aap_mock_data:
+  aap_mock_logs:
+  loki_data:
+  minio_data:

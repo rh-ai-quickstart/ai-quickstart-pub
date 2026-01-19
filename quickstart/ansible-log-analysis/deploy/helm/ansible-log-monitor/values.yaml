@@ -1,0 +1,712 @@
+minio:
+  secret:
+    user: minio_alm_user
+    password: minio_alm_password
+    host: minio
+    port: "9000"
+
+    # Upload sample files to the minio bucket
+  sampleFileUpload:
+    enabled: false
+    # bucket: failed_logs
+    # urls:
+    # - https://raw.githubusercontent.com/***
+
+
+# pgvector:
+#   secret:
+#     user: postgres
+#     password: alm_password
+#     dbname: alm_db
+#     host: pgvector
+#     port: "5432"
+
+# MCP Servers configuration
+mcp-servers:
+  mcp-servers:
+    weather:
+      enabled: false                                     # Disable default weather server
+    loki:
+      enabled: true
+      deploymentMode: deployment                         # How to deploy (deployment = standard Kubernetes)
+      transport: sse
+      targetPort: 8080
+      image:
+        repository: quay.io/rh-ai-quickstart/alm-loki-mcp-server
+        tag: query-direction-support
+      env:
+        LOKI_URL: "http://loki:3100"
+        PORT: "8080"
+
+grafana:
+  fullnameOverride: grafana
+  route:
+    main:
+      # -- Enables or disables the Gateway API HTTPRoute (requires Gateway API CRDs)
+      # -- Set to false for OpenShift clusters without Gateway API; uses extraObjects Route instead
+      enabled: false
+  adminUser: admin
+  adminPassword: alm_password
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: false
+    seccompProfile:
+      type: RuntimeDefault
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - access: proxy
+        editable: true
+        isDefault: true
+        name: Loki
+        type: loki
+        url: http://loki:3100
+        uid: loki
+  # Grafana Alerting Configuration
+  alerting:
+    # Contact Points - Webhook to backend inference endpoint
+    contactpoints.yaml:
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: backend-inference-webhook
+          receivers:
+            - uid: backend-webhook-receiver
+              type: webhook
+              settings:
+                # Grafana webhook URL with templated query parameters
+                # Available labels from Alloy: job, status, filename
+                # Available labels from alert rule: severity, alert_type, detected_level
+                url: 'http://alm-backend:8000/grafana-alert/?log_message={{ "{{" }} urlquery (or .CommonAnnotations.description .CommonAnnotations.summary "Grafana alert triggered") {{ "}}" }}&detected_level={{ "{{" }} urlquery (or .CommonLabels.detected_level "error") {{ "}}" }}&filename={{ "{{" }} urlquery (or .CommonLabels.filename "unknown") {{ "}}" }}&job={{ "{{" }} urlquery (or .CommonLabels.job "ansible_logs") {{ "}}" }}&service_name=grafana'
+                httpMethod: POST
+                message: ""
+              disableResolveMessage: false
+    # Notification Policies - Route alerts to backend webhook
+    policies.yaml:
+      apiVersion: 1
+      policies:
+        - orgId: 1
+          receiver: backend-inference-webhook
+          group_by:
+            - alertname
+            - status
+            - job
+          group_wait: 10s
+          group_interval: 1m
+          repeat_interval: 4h
+          routes:
+            - receiver: backend-inference-webhook
+              matchers:
+                - alertname = "Fatal Ansible Logs"
+              continue: false
+            - receiver: backend-inference-webhook
+              matchers:
+                - alertname = "Failed Ansible Logs"
+              continue: false
+    # Alert Rules - Monitor Loki for fatal/failed logs
+    # Labels from Alloy: job, status, filename
+    rules.yaml:
+      apiVersion: 1
+      groups:
+        - orgId: 1
+          name: ansible-log-alerts
+          folder: Ansible Logs
+          interval: 1m
+          rules:
+            # Alert for FATAL logs
+            - uid: fatal-logs-alert
+              title: Fatal Ansible Logs
+              condition: C
+              data:
+                - refId: A
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: loki
+                  model:
+                    expr: 'count_over_time({status="fatal"}[5m])'
+                    queryType: instant
+                    refId: A
+                - refId: B
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: __expr__
+                  model:
+                    datasource:
+                      type: __expr__
+                      uid: __expr__
+                    expression: A
+                    reducer: sum
+                    refId: B
+                    type: reduce
+                - refId: C
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: __expr__
+                  model:
+                    datasource:
+                      type: __expr__
+                      uid: __expr__
+                    expression: B
+                    refId: C
+                    type: threshold
+                    conditions:
+                      - evaluator:
+                          params:
+                            - 0
+                          type: gt
+                        operator:
+                          type: and
+                        query:
+                          params:
+                            - C
+                        reducer:
+                          params: []
+                          type: last
+                        type: query
+              noDataState: NoData
+              execErrState: Error
+              for: 0s
+              annotations:
+                summary: "Detected fatal Ansible log"
+                description: "A log with status 'fatal' has been detected in job ansible_logs"
+              labels:
+                severity: critical
+                alert_type: ansible_fatal
+            # Alert for FAILED logs
+            - uid: failed-logs-alert
+              title: Failed Ansible Logs
+              condition: C
+              data:
+                - refId: A
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: loki
+                  model:
+                    expr: 'count_over_time({status="failed"}[5m])'
+                    queryType: instant
+                    refId: A
+                - refId: B
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: __expr__
+                  model:
+                    datasource:
+                      type: __expr__
+                      uid: __expr__
+                    expression: A
+                    reducer: sum
+                    refId: B
+                    type: reduce
+                - refId: C
+                  relativeTimeRange:
+                    from: 300
+                    to: 0
+                  datasourceUid: __expr__
+                  model:
+                    datasource:
+                      type: __expr__
+                      uid: __expr__
+                    expression: B
+                    refId: C
+                    type: threshold
+                    conditions:
+                      - evaluator:
+                          params:
+                            - 0
+                          type: gt
+                        operator:
+                          type: and
+                        query:
+                          params:
+                            - C
+                        reducer:
+                          params: []
+                          type: last
+                        type: query
+              noDataState: NoData
+              execErrState: Error
+              for: 0s
+              annotations:
+                summary: "Detected failed Ansible log"
+                description: "A log with status 'failed' has been detected"
+              labels:
+                severity: warning
+                alert_type: ansible_failed
+  grafana.ini:
+    analytics:
+      check_for_updates: true
+    # Enable unified alerting (Grafana 9+)
+    unified_alerting:
+      enabled: true
+    alerting:
+      enabled: false
+    feature_toggles:
+      enable: alertingSimplifiedRouting,alertingQueryAndExpressionsStepMode
+    log:
+      level: info
+      mode: console
+    paths:
+      data: /var/lib/grafana/
+      logs: /var/log/grafana
+      plugins: /var/lib/grafana/plugins
+      provisioning: /etc/grafana/provisioning
+    server:
+      root_url: '%(protocol)s://%(domain)s:%(http_port)s/'
+  initChownData:
+    enabled: false
+  rbac:
+    create: false
+    namespaced: false
+    pspEnabled: false
+  replicas: 1
+  securityContext:
+    runAsNonRoot: true
+  serviceAccount:
+    automountServiceAccountToken: false
+    create: true
+    name: ""
+  extraObjects:
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: grafana-privileged-scc
+      subjects:
+        - kind: ServiceAccount
+          name: grafana
+      roleRef:
+        kind: ClusterRole
+        name: system:openshift:scc:privileged
+        apiGroup: rbac.authorization.k8s.io
+    - apiVersion: route.openshift.io/v1
+      kind: Route
+      metadata:
+        name: grafana
+      spec:
+        to:
+          name: grafana
+          weight: 100
+          kind: Service
+        host: ''
+        path: ''
+        port:
+          targetPort: service
+        alternateBackends: []
+
+
+
+loki:
+  fullnameOverride: loki
+  loki:
+    schemaConfig:
+      configs:
+        - from: "2024-04-01"
+          store: tsdb
+          object_store: s3
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+    ingester:
+      chunk_encoding: snappy
+    querier:
+      max_concurrent: 4
+    server:
+      http_listen_port: 3100
+      grpc_server_max_recv_msg_size: 104857600  # 100MB
+      grpc_server_max_send_msg_size: 104857600  # 100MB
+    # Client-side gRPC limits for internal component communication
+    frontend_worker:
+      grpc_client_config:
+        max_recv_msg_size: 104857600  # 100MB
+        max_send_msg_size: 104857600  # 100MB
+    pattern_ingester:
+      enabled: true
+    limits_config:
+      # Essential for large log entries (current: 415-757 KB, set to 2MB for headroom)
+      max_line_size: 2MB
+
+      # High ingestion rates for bulk loading historical files
+      ingestion_rate_mb: 100
+      ingestion_burst_size_mb: 200
+
+      # Support for many log files with complex labels
+      max_global_streams_per_user: 100000
+
+      allow_structured_metadata: true
+      volume_enabled: true
+    storage:
+      bucketNames:
+        chunks: loki-chunks
+        ruler: loki-ruler
+        admin: loki-admin
+    auth_enabled: false
+
+  deploymentMode: SingleBinary
+
+  singleBinary:
+    replicas: 3
+
+  # Zero out replica counts of other deployment modes
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+
+  ingester:
+    replicas: 0
+  querier:
+    replicas: 0
+  queryFrontend:
+    replicas: 0
+  queryScheduler:
+    replicas: 0
+  distributor:
+    replicas: 0
+  compactor:
+    replicas: 0
+  indexGateway:
+    replicas: 0
+  bloomCompactor:
+    replicas: 0
+  bloomGateway:
+    replicas: 0
+
+  minio:
+    enabled: true
+  rbac:
+    sccEnabled: false
+
+  # Loki Canary: Synthetic log writer/reader for health checks & latency/missing logs metrics.
+  #   - Writes logs with many "p"s + K8s labels (pod, service_name, stream).
+  #   - Filter out with {pod!~"loki-canary.*"} in queries.
+  lokiCanary:
+    kind: Deployment
+
+  global:
+    extraArgs:
+      - "-log.level=debug"
+
+  gateway:
+    nginxConfig:
+      resolver: "172.30.0.10"
+  extraObjects:
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: loki-anyuid-scc
+      rules:
+        - apiGroups:
+            - security.openshift.io
+          resources:
+            - securitycontextconstraints
+          verbs:
+            - use
+          resourceNames:
+            - anyuid
+    
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: loki-anyuid-scc
+      subjects:
+        - kind: ServiceAccount
+          name: loki
+        - kind: ServiceAccount
+          name: loki-canary
+        - kind: ServiceAccount
+          name: minio-sa
+      roleRef:
+        kind: Role
+        name: loki-anyuid-scc
+        apiGroup: rbac.authorization.k8s.io
+
+
+alloy:
+  fullnameOverride: alloy
+  image:
+    registry: quay.io # Intentionaly separate to override the default alloy registry
+    repository: rh-ai-quickstart/alm-alloy
+    tag: "latest"
+    pullPolicy: Always
+  controller:
+    type: deployment  # Changed from the default DaemonSet to Deployment (only need 1 pod for static file collection)
+    replicas: 1
+    # volumes: # Commented out to avoid emptyDir mount (logs are now bundled in alloy image as workaround)
+    #   extra:
+    #     - name: ansible-logs
+    #       emptyDir: {}   # Uses emptyDir, logs will be copied via 'oc cp' (see Makefile load-logs-to-alloy)
+
+  alloy:
+    # Commented out to avoid emptyDir mount (logs are now bundled in alloy image as workaround)
+    # # Volume mounts for the Alloy container
+    # mounts:
+    #   extra:
+    #     - name: ansible-logs
+    #       mountPath: /var/log/ansible_logs
+    configMap:
+      # NOTE: This config filters logs to only aap-mock pods.
+      # If aap-mock.enabled is set to false, no logs will be collected.
+      # Adjust the filter below if you need to collect logs from other sources.
+      content: |-
+        // Logging configuration for debugging
+        logging {
+          level  = "info"
+          format = "logfmt"
+        }
+
+        // TODO: Uncomment this when we have a way to collect logs from aap-mock container (work in progress)
+        // // Discover all pods in the cluster
+        // discovery.kubernetes "pods" {
+        //   role = "pod"
+        // }
+        //
+        // // Relabel discovered targets to add useful labels
+        // // Filtered to only collect logs from aap-mock pods
+        // discovery.relabel "pod_logs" {
+        //   targets = discovery.kubernetes.pods.targets
+        //
+        //   // Filter to only aap-mock pods (using Helm standard label)
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+        //     regex         = "aap-mock"
+        //     action        = "keep"
+        //   }
+        //
+        //   // Add namespace label
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_namespace"]
+        //     action        = "replace"
+        //     target_label  = "namespace"
+        //   }
+        //
+        //   // Add pod name label
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_pod_name"]
+        //     action        = "replace"
+        //     target_label  = "pod"
+        //   }
+        //
+        //   // Add container name label
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_pod_container_name"]
+        //     action        = "replace"
+        //     target_label  = "container"
+        //   }
+        //
+        //   // Add app label if it exists
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_pod_label_app"]
+        //     action        = "replace"
+        //     target_label  = "app"
+        //   }
+        //
+        //   // Add node name label
+        //   rule {
+        //     source_labels = ["__meta_kubernetes_pod_node_name"]
+        //     action        = "replace"
+        //     target_label  = "node"
+        //   }
+        //
+        //   // Optional: Filter specific namespaces (uncomment to use)
+        //   // rule {
+        //   //   source_labels = ["__meta_kubernetes_namespace"]
+        //   //   regex         = "kube-system|kube-public|kube-node-lease"
+        //   //   action        = "drop"
+        //   // }
+        // }
+
+        // // Collect logs from Kubernetes pods using the API
+        // loki.source.kubernetes "pods" {
+        //   targets    = discovery.relabel.pod_logs.output
+        //   forward_to = [loki.process.add_labels.receiver]
+        // }
+
+        // File-based log collection (temporary workaround)
+        // Collects Ansible logs from static file paths
+        // Requires /var/log/ansible_logs to be mounted (see controller.volumes.extra and alloy.mounts.extra above)
+        
+        // Discover log files using glob pattern
+        local.file_match "ansible_logs" {
+          path_targets = [{
+            __address__ = "localhost",
+            __path__    = "/var/log/ansible_logs/**/*.txt",
+          }]
+        }
+
+        // Collect logs from discovered files
+        loki.source.file "ansible_logs" {
+          targets    = local.file_match.ansible_logs.targets
+          forward_to = [loki.process.ansible_pipeline.receiver]
+        }
+
+        // Process Ansible logs with comprehensive pipeline
+        loki.process "ansible_pipeline" {
+          forward_to = [loki.write.loki.receiver]
+
+          // Stage 1: Multiline Aggregation
+          // Combines multi-line Ansible log entries (PLAY, TASK, RECAP, etc.)
+          stage.multiline {
+            firstline     = "^(PLAY\\s+\\[|TASK\\s+\\[|RUNNING HANDLER\\s+\\[|PLAY\\s+RECAP\\s+\\*+|NO MORE HOSTS LEFT\\s+\\*+|Vault password)"
+            max_wait_time = "3s"
+            max_lines     = 2000
+          }
+
+          // Stage 2: Extract task name marker
+          stage.regex {
+            expression = "^TASK\\s+\\[(?P<task_name_marker>[^\\]]+)\\]"
+          }
+
+          // Stage 3: Extract recap marker
+          stage.regex {
+            expression = "^PLAY\\s+RECAP\\s+(?P<recap_marker>\\*+)"
+          }
+
+          // Stage 4: Extract play name marker
+          stage.regex {
+            expression = "^PLAY\\s+\\[(?P<play_name_marker>[^\\]]+)\\]\\s+\\*+"
+          }
+
+          // Stage 5: Extract timestamp from log content
+          stage.regex {
+            expression = "(?P<real_timestamp>\\w+ \\d{2} \\w+ \\d{4}  \\d{2}:\\d{2}:\\d{2} [+-]\\d{4})"
+          }
+
+          // Stage 6: Extract status from TASK entries
+          stage.regex {
+            expression = "(?P<status>ok|changed|failed|fatal|skipping|included):\\s+\\[(?P<host>[^\\]]+)\\]"
+          }
+
+          // Stage 7: Promote markers to labels (needed for match selectors)
+          stage.labels {
+            values = {
+              task_name_marker = "",
+              recap_marker     = "",
+              play_name_marker = "",
+            }
+          }
+
+          // Stage 8: Set log_type = 'task' if task_name_marker exists
+          stage.match {
+            selector = "{task_name_marker!=\"\"}"
+            stage.static_labels {
+              values = {
+                log_type = "task",
+              }
+            }
+          }
+
+          // Stage 9: Set log_type = 'recap' if recap_marker exists and log_type not set
+          stage.match {
+            selector = "{recap_marker!=\"\",log_type=\"\"}"
+            stage.static_labels {
+              values = {
+                log_type = "recap",
+              }
+            }
+          }
+
+          // Stage 10: Set log_type = 'play' if play_name_marker exists and log_type not set
+          stage.match {
+            selector = "{play_name_marker!=\"\",log_type=\"\"}"
+            stage.static_labels {
+              values = {
+                log_type = "play",
+              }
+            }
+          }
+
+          // Stage 11: Fallback for unmatched entries
+          stage.match {
+            selector = "{log_type=\"\"}"
+            stage.static_labels {
+              values = {
+                log_type = "other",
+              }
+            }
+          }
+
+          // Stage 12: Add status as label
+          stage.labels {
+            values = {
+              status = "",
+            }
+          }
+
+          // Stage 13: Convert log_type and real_timestamp to structured metadata
+          stage.structured_metadata {
+            values = {
+              log_type       = "",
+              real_timestamp = "",
+            }
+          }
+
+          // Stage 14: Drop temporary marker labels (cleanup)
+          stage.label_drop {
+            values = [
+              "task_name_marker",
+              "recap_marker",
+              "play_name_marker",
+              "log_type",
+            ]
+          }
+        }
+
+        // Configure Loki write endpoint
+        loki.write "loki" {
+          endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+            
+            // Optional: Add basic auth if required
+            // basic_auth {
+            //   username = "admin"
+            //   password = "password"
+            // }
+          }
+
+          // Optional: External labels for all logs
+          external_labels = {
+            source = "alloy",
+          }
+        }
+  rbac:
+    create: true
+
+# AAP Log Generator (Mock) configuration
+# Generates mock Ansible Automation Platform logs for testing and demonstration
+aap-mock:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: quay.io/ecosystem-appeng/aap-mock
+    pullPolicy: Always
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  persistence:
+    data:
+      enabled: true
+      size: 2Gi
+    logs:
+      enabled: true
+      size: 1Gi
+    sampleLogs:
+      enabled: true
+      size: 1Gi
+  route:
+    enabled: true

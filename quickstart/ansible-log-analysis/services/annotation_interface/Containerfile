@@ -1,0 +1,33 @@
+FROM registry.access.redhat.com/ubi8/python-312
+
+USER root
+
+# Install uv pointing to the uv image and coping from there
+# /uv and /uvx are the source files copied from the uv image
+# /bin is the destination
+COPY --from=ghcr.io/astral-sh/uv:0.9.7 /uv /uvx /bin/
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency files
+COPY pyproject.toml ./
+
+# Install dependencies
+RUN uv sync --no-dev
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY app.py test_end_to_end.py .
+COPY data/feedback/annotation.json data/feedback/annotation.json
+
+# Create .deepeval directory and set permissions for non-root user
+# This fixes PermissionError when deepeval tries to create its cache directory
+RUN mkdir -p /app/.deepeval && chmod -R 777 /app/.deepeval
+ENV HOME=/app
+
+# Expose the Gradio port
+EXPOSE 7861
+
+# Run the Gradio app
+ENTRYPOINT ["python","app.py"]

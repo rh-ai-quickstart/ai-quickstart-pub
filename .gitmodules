@@ -22,3 +22,7 @@
 [submodule "quickstart/it-self-service-agent"]
 	path = quickstart/it-self-service-agent
 	url = https://github.com/rh-ai-quickstart/it-self-service-agent.git
+[submodule "ansible-log-analysis"]
+	path = ansible-log-analysis
+	url = https://github.com/rh-ai-quickstart/ansible-log-analysis.git
+	branch = main
