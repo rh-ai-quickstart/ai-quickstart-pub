@@ -26,3 +26,7 @@
 	path = quickstart/ansible-log-analysis
 	url = https://github.com/rh-ai-quickstart/ansible-log-analysis.git
 	branch = main
+[submodule "quickstart/maas-code-assistant"]
+	path = quickstart/maas-code-assistant
+	url = https://github.com/rh-ai-quickstart/maas-code-assistant.git
+	branch = main
