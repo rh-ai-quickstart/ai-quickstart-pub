@@ -30,3 +30,6 @@
 	path = quickstart/maas-code-assistant
 	url = https://github.com/rh-ai-quickstart/maas-code-assistant.git
 	branch = main
+[submodule "quickstart/spending-transaction-monitor"]
+	path = quickstart/spending-transaction-monitor
+	url = https://github.com/rh-ai-quickstart/spending-transaction-monitor.git
