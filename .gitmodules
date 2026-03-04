@@ -26,3 +26,6 @@
 	path = quickstart/ansible-log-analysis
 	url = https://github.com/rh-ai-quickstart/ansible-log-analysis.git
 	branch = main
+[submodule "quickstart/data-governance-co-pilot"]
+	path = quickstart/data-governance-co-pilot
+	url = https://github.com/rh-ai-quickstart/data-governance-co-pilot
