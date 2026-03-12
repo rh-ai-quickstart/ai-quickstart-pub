@@ -35,4 +35,4 @@
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
 [submodule "quickstarts/openshift-ai-observability-summarizer"]
 	path = quickstarts/openshift-ai-observability-summarizer
-	url = https://github.com/rh-ai-quickstart/ai-quickstart-pub.git
+	url = https://github.com/rh-ai-quickstart/ai-observability-summarizer.git
