@@ -36,3 +36,6 @@
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
+[submodule "quickstart/lakefs-data-versioning"]
+	path = quickstart/lakefs-data-versioning
+	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
