@@ -29,3 +29,10 @@
 [submodule "quickstart/data-governance-co-pilot"]
 	path = quickstart/data-governance-co-pilot
 	url = https://github.com/rh-ai-quickstart/data-governance-co-pilot
+[submodule "quickstart/maas-code-assistant"]
+	path = quickstart/maas-code-assistant
+	url = https://github.com/rh-ai-quickstart/maas-code-assistant.git
+	branch = main
+[submodule "quickstart/f5-api-security"]
+	path = quickstart/f5-api-security
+	url = https://github.com/rh-ai-quickstart/f5-api-security.git
