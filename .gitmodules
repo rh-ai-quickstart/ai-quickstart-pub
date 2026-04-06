@@ -33,6 +33,9 @@
 	path = quickstart/maas-code-assistant
 	url = https://github.com/rh-ai-quickstart/maas-code-assistant.git
 	branch = main
+[submodule "quickstart/spending-transaction-monitor"]
+	path = quickstart/spending-transaction-monitor
+	url = https://github.com/rh-ai-quickstart/spending-transaction-monitor.git
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
