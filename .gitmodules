@@ -36,3 +36,6 @@
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
+[submodule "quickstart/aml-rag-nvidia"]
+	path = quickstart/aml-rag-nvidia
+	url = https://github.com/rh-ai-quickstart/aml-rag-nvidia.git
