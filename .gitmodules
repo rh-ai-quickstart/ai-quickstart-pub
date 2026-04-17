@@ -33,3 +33,6 @@
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
+[submodule "quickstart/eyelevel-pub"]
+	path = quickstart/eyelevel-pub
+	url = https://github.com/rh-ai-quickstart/Billing-extraction-with-GroundX.git
