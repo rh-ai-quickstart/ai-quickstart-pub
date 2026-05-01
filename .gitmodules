@@ -39,3 +39,6 @@
 [submodule "quickstart/aml-rag-nvidia"]
 	path = quickstart/aml-rag-nvidia
 	url = https://github.com/rh-ai-quickstart/aml-rag-nvidia.git
+[submodule "quickstart/lemonade-stand-assistant"]
+	path = quickstart/lemonade-stand-assistant
+	url = https://github.com/rh-ai-quickstart/lemonade-stand-assistant.git
