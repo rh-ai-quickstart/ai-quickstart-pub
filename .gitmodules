@@ -39,3 +39,6 @@
 [submodule "quickstart/aml-rag-nvidia"]
 	path = quickstart/aml-rag-nvidia
 	url = https://github.com/rh-ai-quickstart/aml-rag-nvidia.git
+[submodule "quickstart/f5-ai-guardrails"]
+	path = quickstart/f5-ai-guardrails
+	url = https://github.com/rh-ai-quickstart/f5-ai-guardrails.git
