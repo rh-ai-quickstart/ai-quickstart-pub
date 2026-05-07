@@ -42,3 +42,9 @@
 [submodule "quickstart/lemonade-stand-assistant"]
 	path = quickstart/lemonade-stand-assistant
 	url = https://github.com/rh-ai-quickstart/lemonade-stand-assistant.git
+[submodule "quickstart/multi-agent-loan-origination"]
+	path = quickstart/multi-agent-loan-origination
+	url = https://github.com/rh-ai-quickstart/multi-agent-loan-origination
+[submodule "quickstart/f5-ai-guardrails"]
+	path = quickstart/f5-ai-guardrails
+	url = https://github.com/rh-ai-quickstart/f5-ai-guardrails.git
