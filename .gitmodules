@@ -51,3 +51,7 @@
 [submodule "quickstart/f5-ai-guardrails"]
 	path = quickstart/f5-ai-guardrails
 	url = https://github.com/rh-ai-quickstart/f5-ai-guardrails.git
+[submodule "quickstart/rh-research"]
+	path = quickstart/rh-research
+	url = https://github.com/rh-ai-quickstart/rh-research.git
+	branch = quickstart
