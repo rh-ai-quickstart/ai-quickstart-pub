@@ -33,3 +33,6 @@
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
+[submodule "quickstart/dagshub-ai-dev-platform"]
+	path = quickstart/dagshub-ai-dev-platform
+	url = https://github.com/rh-ai-quickstart/dagshub-ai-dev-platform-support.git
