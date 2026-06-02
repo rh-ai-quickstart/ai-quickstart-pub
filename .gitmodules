@@ -33,3 +33,6 @@
 [submodule "quickstart/f5-api-security"]
 	path = quickstart/f5-api-security
 	url = https://github.com/rh-ai-quickstart/f5-api-security.git
+[submodule "quickstart/redis-cost-savings"]
+	path = quickstart/redis-cost-savings
+	url = https://github.com/rh-ai-quickstart/Reducing-costs-of-AI-with-Redis-Labs.git
