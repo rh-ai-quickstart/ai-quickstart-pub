@@ -1,0 +1,34 @@
+name: Test Claude API
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test API key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Testing Claude API connection..."
+
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d '{
+              "model": "claude-sonnet-4-5-20250929",
+              "max_tokens": 100,
+              "messages": [{"role": "user", "content": "Say hello in exactly 5 words"}]
+            }')
+
+          echo "Response:"
+          echo "$RESPONSE" | jq .
+
+          # Check for errors
+          if echo "$RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
+            echo "❌ API Error:"
+            echo "$RESPONSE" | jq -r '.error'
+            exit 1
+          fi
+
+          echo "✅ API key works! Claude responded successfully."
