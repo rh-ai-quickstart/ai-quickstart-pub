@@ -55,3 +55,6 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/thisisatest"]
+	path = quickstart/thisisatest
+	url = http://github.com/rh-ai-quickstart/ai-quickstart-template.git
