@@ -163,66 +163,51 @@ jobs:
             PUBLISHING_CONTENT=$(cat /tmp/requirements/docs/PUBLISHING.md)
           fi
 
-          # Build the review prompt
-          cat > /tmp/review-prompt.txt <<'PROMPT_EOF'
-You are a technical documentation reviewer for Red Hat AI quickstart guides.
-
-Your job is to review README documentation against Red Hat standards and best practices.
-
-## README to Review
-
-README_CONTENT_PLACEHOLDER
-
-## Requirements Documents
-
-### Contributing Guidelines
-CONTRIBUTING_CONTENT_PLACEHOLDER
-
-### Publishing Guidelines
-PUBLISHING_CONTENT_PLACEHOLDER
-
-## Task
-
-Review the README and identify any issues, categorized by severity:
-- **BLOCKER**: Must fix before publication (missing required sections, incorrect trademarks, broken links)
-- **MAJOR**: Should fix (structural issues, significant style violations, unclear instructions)
-- **MINOR**: Nice to have (minor formatting, consistency improvements)
-- **SUGGESTION**: Optional improvements (enhancements, recommendations)
-
-Output your findings in the following JSON structure:
-
-{
-  "summary": {
-    "total_findings": <number>,
-    "blockers": <number>,
-    "major": <number>,
-    "minor": <number>,
-    "suggestions": <number>
-  },
-  "findings": [
-    {
-      "severity": "blocker|major|minor|suggestion",
-      "category": "structure|style|content|formatting|technical",
-      "title": "Brief description (under 80 chars)",
-      "description": "Detailed explanation with references to requirements. Explain what's wrong and why it matters.",
-      "location": "Section name or approximate location in README",
-      "requirement_ref": "Which guideline this violates (e.g., 'CONTRIBUTING.md - Prerequisites section')",
-      "suggested_fix": "Specific actionable suggestion for how to fix this"
-    }
-  ]
-}
-
-Be specific and actionable. Reference the actual requirement documents where applicable.
-If the README is excellent, it's okay to have zero findings.
-PROMPT_EOF
-
-          # Replace placeholders
-          sed -i.bak "s|README_CONTENT_PLACEHOLDER|$README_CONTENT|g" /tmp/review-prompt.txt
-          sed -i.bak "s|CONTRIBUTING_CONTENT_PLACEHOLDER|$CONTRIBUTING_CONTENT|g" /tmp/review-prompt.txt
-          sed -i.bak "s|PUBLISHING_CONTENT_PLACEHOLDER|$PUBLISHING_CONTENT|g" /tmp/review-prompt.txt
-
-          # Build JSON payload for Claude API
-          PROMPT_TEXT=$(cat /tmp/review-prompt.txt | jq -Rs .)
+          # Build the review prompt using jq to avoid heredoc issues in YAML
+          PROMPT_TEXT=$(jq -n \
+            --arg readme "$README_CONTENT" \
+            --arg contributing "$CONTRIBUTING_CONTENT" \
+            --arg publishing "$PUBLISHING_CONTENT" \
+            '$readme as $r | $contributing as $c | $publishing as $p |
+            "You are a technical documentation reviewer for Red Hat AI quickstart guides.\n\n" +
+            "Your job is to review README documentation against Red Hat standards and best practices.\n\n" +
+            "## README to Review\n\n" +
+            $r + "\n\n" +
+            "## Requirements Documents\n\n" +
+            "### Contributing Guidelines\n" +
+            $c + "\n\n" +
+            "### Publishing Guidelines\n" +
+            $p + "\n\n" +
+            "## Task\n\n" +
+            "Review the README and identify any issues, categorized by severity:\n" +
+            "- BLOCKER: Must fix before publication (missing required sections, incorrect trademarks, broken links)\n" +
+            "- MAJOR: Should fix (structural issues, significant style violations, unclear instructions)\n" +
+            "- MINOR: Nice to have (minor formatting, consistency improvements)\n" +
+            "- SUGGESTION: Optional improvements (enhancements, recommendations)\n\n" +
+            "Output your findings in the following JSON structure:\n\n" +
+            "{\n" +
+            "  \"summary\": {\n" +
+            "    \"total_findings\": 0,\n" +
+            "    \"blockers\": 0,\n" +
+            "    \"major\": 0,\n" +
+            "    \"minor\": 0,\n" +
+            "    \"suggestions\": 0\n" +
+            "  },\n" +
+            "  \"findings\": [\n" +
+            "    {\n" +
+            "      \"severity\": \"blocker|major|minor|suggestion\",\n" +
+            "      \"category\": \"structure|style|content|formatting|technical\",\n" +
+            "      \"title\": \"Brief description (under 80 chars)\",\n" +
+            "      \"description\": \"Detailed explanation with references to requirements.\",\n" +
+            "      \"location\": \"Section name or approximate location in README\",\n" +
+            "      \"requirement_ref\": \"Which guideline this violates\",\n" +
+            "      \"suggested_fix\": \"Specific actionable suggestion\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
+            "If the README is excellent, it is okay to have zero findings."
+          ')
 
           PAYLOAD=$(jq -n \
             --arg prompt "$PROMPT_TEXT" \
