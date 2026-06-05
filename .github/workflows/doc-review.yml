@@ -316,17 +316,38 @@ jobs:
       - name: Post PR comment with findings
         if: steps.detect.outputs.changed == 'true'
         uses: actions/github-script@v7
+        env:
+          SUBMODULE_PATH: ${{ steps.detect.outputs.path }}
+          SOURCE_ORG: ${{ steps.detect.outputs.org }}
+          SOURCE_REPO: ${{ steps.detect.outputs.repo }}
+          SUBMODULE_SHA: ${{ steps.detect.outputs.sha }}
+          TOTAL_FINDINGS: ${{ steps.review.outputs.total }}
+          BLOCKERS_COUNT: ${{ steps.review.outputs.blockers }}
+          MAJOR_COUNT: ${{ steps.review.outputs.major }}
+          MINOR_COUNT: ${{ steps.review.outputs.minor }}
+          SUGGESTIONS_COUNT: ${{ steps.review.outputs.suggestions }}
         with:
           script: |
             const fs = require('fs');
             const findings = JSON.parse(fs.readFileSync('/tmp/findings.json', 'utf8'));
 
+            // Get values from environment
+            const submodulePath = process.env.SUBMODULE_PATH;
+            const sourceOrg = process.env.SOURCE_ORG;
+            const sourceRepo = process.env.SOURCE_REPO;
+            const submoduleSha = process.env.SUBMODULE_SHA;
+            const totalFindings = process.env.TOTAL_FINDINGS;
+            const blockersCount = process.env.BLOCKERS_COUNT;
+            const majorCount = process.env.MAJOR_COUNT;
+            const minorCount = process.env.MINOR_COUNT;
+            const suggestionsCount = process.env.SUGGESTIONS_COUNT;
+
             // Build comment body
             let body = `## 📋 Automated Documentation Review (DRY-RUN)
 
-**Submodule:** \`${{ steps.detect.outputs.path }}\`
-**Source Repo:** [${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}](https://github.com/${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }})
-**Commit:** [\`${String('${{ steps.detect.outputs.sha }}').substring(0, 7)}\`](https://github.com/${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}/commit/${{ steps.detect.outputs.sha }})
+**Submodule:** \`${submodulePath}\`
+**Source Repo:** [${sourceOrg}/${sourceRepo}](https://github.com/${sourceOrg}/${sourceRepo})
+**Commit:** [\`${submoduleSha.substring(0, 7)}\`](https://github.com/${sourceOrg}/${sourceRepo}/commit/${submoduleSha})
 **Reviewed:** ${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC
 
 ---
@@ -335,11 +356,11 @@ jobs:
 
 | Severity | Count |
 |----------|-------|
-| 🚫 Blockers | ${{ steps.review.outputs.blockers }} |
-| ⚠️ Major | ${{ steps.review.outputs.major }} |
-| ℹ️ Minor | ${{ steps.review.outputs.minor }} |
-| 💡 Suggestions | ${{ steps.review.outputs.suggestions }} |
-| **Total** | **${{ steps.review.outputs.total }}** |
+| 🚫 Blockers | ${blockersCount} |
+| ⚠️ Major | ${majorCount} |
+| ℹ️ Minor | ${minorCount} |
+| 💡 Suggestions | ${suggestionsCount} |
+| **Total** | **${totalFindings}** |
 
 ---
 `;
@@ -411,7 +432,7 @@ jobs:
 ### 🧪 This is a DRY-RUN
 
 This review is running in **test mode**. In production:
-- ${{ steps.review.outputs.total }} issues would be created in [${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}](https://github.com/${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}/issues)
+- ${totalFindings} issues would be created in [${sourceOrg}/${sourceRepo}](https://github.com/${sourceOrg}/${sourceRepo}/issues)
 - Issues would be automatically tracked across re-reviews
 - Resolved findings would close issues automatically
 
