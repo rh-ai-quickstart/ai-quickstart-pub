@@ -242,14 +242,25 @@ jobs:
 
           echo "✅ Review complete"
 
+          # Claude often wraps JSON in markdown code fences, strip them
+          FINDINGS_CLEAN=$(echo "$FINDINGS" | sed -n '/^```json$/,/^```$/p' | sed '1d;$d')
+
+          # If no code fence found, use original
+          if [ -z "$FINDINGS_CLEAN" ]; then
+            FINDINGS_CLEAN="$FINDINGS"
+          fi
+
           # Save findings to file
-          echo "$FINDINGS" > /tmp/findings.json
+          echo "$FINDINGS_CLEAN" > /tmp/findings.json
 
           # Validate JSON
           if ! jq empty /tmp/findings.json 2>/dev/null; then
-            echo "⚠️ WARNING: Response is not valid JSON"
+            echo "⚠️ WARNING: Response is not valid JSON after cleanup"
             echo "Raw response:"
             cat /tmp/findings.json
+            echo ""
+            echo "Original response from Claude:"
+            echo "$FINDINGS"
             exit 1
           fi
 
