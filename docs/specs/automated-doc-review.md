@@ -386,7 +386,29 @@ If GitHub App setup is blocked organizationally:
 
 **Recommended Setup: GitHub App**
 
-### 4.2 Submodule Detection Logic
+### 4.2 Implementation Language
+
+**Choice: Shell Scripts (bash + standard utilities)**
+
+The workflow implementation will use shell scripts with standard command-line tools:
+- **bash** - Workflow scripting and control flow
+- **jq** - JSON parsing and manipulation (pre-installed in GitHub Actions)
+- **gh** - GitHub CLI for API calls (pre-installed in GitHub Actions)
+- **curl** - HTTP requests to Claude API (pre-installed)
+- **git** - Submodule detection and diff operations
+
+**Rationale:**
+- Zero setup overhead (all tools pre-installed)
+- Direct integration with GitHub Actions
+- Easy to debug via workflow logs
+- Sufficient for the task complexity
+- No build/compile step required
+
+**Alternative considered:** Python scripts would be more elegant for complex JSON handling, but require setup steps and dependencies. The simplicity of bash outweighs the ergonomics benefit for this use case.
+
+**Note:** All code examples in this spec use language-agnostic pseudocode to describe logic. Actual implementation will use the tools listed above.
+
+### 4.3 Submodule Detection Logic
 
 ```bash
 # Detect changed submodules in PR
@@ -403,9 +425,9 @@ git diff --submodule=diff origin/$BASE_BRANCH...$HEAD_SHA -- quickstart/
 - Exactly one submodule changed (fail if multiple)
 - Submodule contains README.md (fail if missing)
 
-### 4.3 Claude API Integration
+### 4.4 Claude API Integration
 
-#### 4.3.1 Review Prompt Structure
+#### 4.4.1 Review Prompt Structure
 
 **System Prompt:**
 ```
@@ -450,7 +472,7 @@ Review the README and output findings in the following JSON structure:
 {JSON_SCHEMA}
 ```
 
-#### 4.3.2 Response Schema
+#### 4.4.2 Response Schema
 
 ```json
 {
@@ -487,16 +509,22 @@ Review the README and output findings in the following JSON structure:
 ```
 
 **Finding ID Generation:**
-```javascript
-// Stable hash for tracking findings across reviews
-const findingId = hash(
-  category + title + location + requirement_ref
-);
-```
 
-### 4.4 Issue Management Logic
+To track findings across re-reviews, each finding needs a stable identifier:
 
-#### 4.4.1 State Tracking
+- **Input:** Concatenate `category + title + location + requirement_ref`
+- **Process:** Generate cryptographic hash (e.g., SHA-256)
+- **Output:** Stable ID like `f8a3c2b1...` (truncated for readability)
+- **Property:** Same finding = same ID, even across workflow runs
+
+This allows the system to detect:
+- New findings (ID not in previous state)
+- Resolved findings (ID in previous state but not current)
+- Changed findings (ID matches but description differs)
+
+### 4.5 Issue Management Logic
+
+#### 4.5.1 State Tracking
 
 **Storage:** Embedded in PR comment as HTML comment (invisible to users)
 
@@ -523,41 +551,51 @@ const findingId = hash(
 -->
 ```
 
-#### 4.4.2 Issue Lifecycle
+#### 4.5.2 Issue Lifecycle
 
 **On Each Review Run:**
 
-```javascript
-previous_findings = extract_state_from_pr_comment()
-current_findings = claude_review_results
+The workflow compares current findings against previous findings to determine what actions to take:
 
-// New findings
-new_findings = current_findings - previous_findings
-for (finding in new_findings) {
-  issue = create_issue(finding)
-  track_issue(finding.id, issue.url)
-}
+**1. Extract Previous State**
+- Read the PR comment to find the embedded HTML comment
+- Parse the JSON state containing previous findings and their issue URLs
+- If no previous state exists (first run), treat as all new findings
 
-// Resolved findings
-resolved = previous_findings - current_findings
-for (finding_id in resolved) {
-  issue = get_tracked_issue(finding_id)
-  close_issue(issue, "Fixed in submodule commit {SHA}")
-}
+**2. Identify New Findings**
+- Compare current finding IDs to previous finding IDs
+- For each ID in current but not in previous:
+  - Create a new issue in the source repository
+  - Record the issue URL and number in state
+  - Mark as "open"
 
-// Changed findings (same ID, different description)
-for (finding in current_findings) {
-  if (finding.id in previous_findings 
-      && finding.description != previous[finding.id].description) {
-    issue = get_tracked_issue(finding.id)
-    update_issue(issue, finding.description)
-  }
-}
+**3. Identify Resolved Findings**
+- Compare previous finding IDs to current finding IDs
+- For each ID in previous but not in current:
+  - Close the corresponding issue in the source repository
+  - Add closing comment: "Fixed in submodule commit `{SHA}`"
+  - Remove from state (or mark as "resolved" for historical tracking)
 
-// Unchanged findings - no action needed
-```
+**4. Identify Changed Findings**
+- For each ID present in both previous and current:
+  - Compare the finding descriptions
+  - If description differs:
+    - Update the issue body with new description
+    - Add comment: "Finding details updated based on re-review"
+  - If description unchanged:
+    - No action needed (issue remains open as-is)
 
-#### 4.4.3 Issue Template
+**5. Update State**
+- Rebuild the state JSON with current findings and their issue mappings
+- Embed updated state in the new PR comment
+
+This approach ensures:
+- Fixes are detected automatically (issues close when finding disappears)
+- New issues don't get duplicated (stable ID prevents re-creation)
+- Updates are tracked (issue body reflects latest finding details)
+- State persists across workflow runs (no external database needed)
+
+#### 4.5.3 Issue Template
 
 **Title:** `[Doc Review] {finding.title}`
 
@@ -592,7 +630,7 @@ for (finding in current_findings) {
 *This issue was automatically created by the documentation review system.*
 ```
 
-### 4.5 PR Comment Format
+### 4.6 PR Comment Format
 
 **Comment ID:** Uses GitHub comment ID for updates (find by search pattern)
 
