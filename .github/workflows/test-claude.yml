@@ -1,5 +1,11 @@
 name: Test Claude API
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - automated-readme-review
+    paths:
+      - '.github/workflows/test-claude.yml'
 
 jobs:
   test:
