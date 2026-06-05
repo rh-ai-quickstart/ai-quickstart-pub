@@ -717,9 +717,9 @@ No resolved issues yet
 ### 📚 Review Standards
 
 This review checks against:
-- [Quickstart Requirements](https://github.com/rh-ai-quickstart/ai-quickstart-contrib/blob/main/docs/quickstart-requirements.md)
-- [README Template](https://github.com/rh-ai-quickstart/ai-quickstart-contrib/blob/main/docs/readme-template.md)
-- [Red Hat Writing Guide](https://github.com/rh-ai-quickstart/ai-quickstart-contrib/blob/main/docs/redhat-writing-guide.md)
+- [Quickstart Requirements](https://github.com/rh-ai-quickstart/ai-quickstart-contrib/blob/main/docs/CONTRIBUTING.md)
+- [README Template](https://github.com/rh-ai-quickstart/ai-quickstart-template/blob/main/README.md)
+- [Red Hat Writing Guide](https://github.com/rh-ai-quickstart/ai-quickstart-contrib/blob/main/docs/PUBLISHING.md)
 
 ---
 
