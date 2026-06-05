@@ -55,3 +55,6 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/testing123"]
+	path = quickstart/testing123
+	url = https://github.com/rh-ai-quickstart/lemonade-stand-assistant.git
