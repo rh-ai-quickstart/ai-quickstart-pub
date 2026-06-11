@@ -20,6 +20,7 @@ jobs:
       - name: Checkout PR with submodules
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
           fetch-depth: 0
           submodules: true  # Only checkout immediate submodules, not nested
 
