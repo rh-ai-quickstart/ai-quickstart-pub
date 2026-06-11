@@ -1,0 +1,441 @@
+name: Documentation Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'quickstart/**'
+      - '.gitmodules'  # Catch submodule additions/removals
+  workflow_dispatch: 
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR with submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true  # Only checkout immediate submodules, not nested
+
+      - name: Detect changed submodule
+        id: detect
+        run: |
+          echo "Detecting changed submodules in quickstart/"
+
+          # Get base branch (usually main)
+          BASE_BRANCH="${{ github.base_ref }}"
+          echo "Base branch: $BASE_BRANCH"
+
+          # Find changed submodules
+          CHANGED_SUBMODULES=$(git diff --name-only origin/$BASE_BRANCH...HEAD -- quickstart/ | grep -E '^quickstart/[^/]+$' || true)
+
+          if [ -z "$CHANGED_SUBMODULES" ]; then
+            echo "No submodule changes detected"
+            echo "changed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Count submodules
+          SUBMODULE_COUNT=$(echo "$CHANGED_SUBMODULES" | wc -l | tr -d ' ')
+          echo "Found $SUBMODULE_COUNT changed submodule(s)"
+
+          if [ "$SUBMODULE_COUNT" -ne 1 ]; then
+            echo "❌ ERROR: Expected exactly 1 submodule change, found $SUBMODULE_COUNT"
+            echo "This workflow only supports one submodule per PR."
+            echo "Changed paths:"
+            echo "$CHANGED_SUBMODULES"
+            exit 1
+          fi
+
+          # Extract submodule info
+          SUBMODULE_PATH=$(echo "$CHANGED_SUBMODULES" | head -1)
+          echo "Submodule path: $SUBMODULE_PATH"
+
+          # Get submodule repo URL from .gitmodules
+          SUBMODULE_URL=$(git config --file .gitmodules --get "submodule.$SUBMODULE_PATH.url" || echo "")
+
+          if [ -z "$SUBMODULE_URL" ]; then
+            echo "❌ ERROR: Could not find submodule URL in .gitmodules"
+            exit 1
+          fi
+
+          echo "Submodule URL: $SUBMODULE_URL"
+
+          # Extract org/repo from URL (handles both https and git@ formats)
+          if [[ "$SUBMODULE_URL" =~ github.com[:/]([^/]+)/([^/.]+) ]]; then
+            SOURCE_ORG="${BASH_REMATCH[1]}"
+            SOURCE_REPO="${BASH_REMATCH[2]}"
+          else
+            echo "❌ ERROR: Could not parse GitHub org/repo from URL: $SUBMODULE_URL"
+            exit 1
+          fi
+
+          echo "Source org: $SOURCE_ORG"
+          echo "Source repo: $SOURCE_REPO"
+
+          # Get current commit SHA
+          cd "$SUBMODULE_PATH"
+          SUBMODULE_SHA=$(git rev-parse HEAD)
+          echo "Submodule commit: $SUBMODULE_SHA"
+          cd -
+
+          # Set outputs
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "path=$SUBMODULE_PATH" >> $GITHUB_OUTPUT
+          echo "url=$SUBMODULE_URL" >> $GITHUB_OUTPUT
+          echo "org=$SOURCE_ORG" >> $GITHUB_OUTPUT
+          echo "repo=$SOURCE_REPO" >> $GITHUB_OUTPUT
+          echo "sha=$SUBMODULE_SHA" >> $GITHUB_OUTPUT
+
+      - name: Extract README from submodule
+        id: readme
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          SUBMODULE_PATH="${{ steps.detect.outputs.path }}"
+          README_PATH="$SUBMODULE_PATH/README.md"
+
+          echo "Looking for README at: $README_PATH"
+
+          if [ ! -f "$README_PATH" ]; then
+            echo "❌ ERROR: README.md not found at $README_PATH"
+            exit 1
+          fi
+
+          echo "✅ README found ($(wc -l < "$README_PATH") lines)"
+
+          # Save README content to file for next step
+          cp "$README_PATH" /tmp/readme.md
+
+          echo "readme_exists=true" >> $GITHUB_OUTPUT
+
+      - name: Fetch requirements from ai-quickstart-contrib
+        id: requirements
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          echo "Fetching requirements documentation..."
+
+          # Clone the requirements repo
+          git clone --depth=1 https://github.com/rh-ai-quickstart/ai-quickstart-contrib /tmp/requirements
+
+          # Debug: Show what we got
+          echo "DEBUG: Contents of /tmp/requirements:"
+          ls -la /tmp/requirements/ | head -15
+
+          # Check for required docs
+          CONTRIBUTING="/tmp/requirements/CONTRIBUTING.md"
+          PUBLISHING="/tmp/requirements/PUBLISHING.md"
+
+          if [ ! -f "$CONTRIBUTING" ]; then
+            echo "❌ WARNING: CONTRIBUTING.md not found at $CONTRIBUTING"
+            echo "contributing_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found CONTRIBUTING.md ($(wc -l < "$CONTRIBUTING") lines)"
+            echo "contributing_exists=true" >> $GITHUB_OUTPUT
+          fi
+
+          if [ ! -f "$PUBLISHING" ]; then
+            echo "❌ WARNING: PUBLISHING.md not found at $PUBLISHING"
+            echo "publishing_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found PUBLISHING.md ($(wc -l < "$PUBLISHING") lines)"
+            echo "publishing_exists=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Review with Claude API
+        id: review
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Starting Claude API review..."
+
+          # Read README and requirements into files (avoids bash variable escaping issues)
+          cp /tmp/readme.md /tmp/readme-input.txt
+
+          if [ -f /tmp/requirements/CONTRIBUTING.md ]; then
+            cp /tmp/requirements/CONTRIBUTING.md /tmp/contributing-input.txt
+          else
+            echo "" > /tmp/contributing-input.txt
+          fi
+
+          if [ -f /tmp/requirements/PUBLISHING.md ]; then
+            cp /tmp/requirements/PUBLISHING.md /tmp/publishing-input.txt
+          else
+            echo "" > /tmp/publishing-input.txt
+          fi
+
+          # Build the review prompt using jq with --rawfile to properly handle content
+          PROMPT_TEXT=$(jq -n \
+            --rawfile readme /tmp/readme-input.txt \
+            --rawfile contributing /tmp/contributing-input.txt \
+            --rawfile publishing /tmp/publishing-input.txt \
+            '$readme as $r | $contributing as $c | $publishing as $p |
+            "You are a technical documentation reviewer for Red Hat AI quickstart guides.\n\n" +
+            "Your job is to review README documentation against Red Hat standards and best practices.\n\n" +
+            "## README to Review\n\n" +
+            $r + "\n\n" +
+            "## Requirements Documents\n\n" +
+            "### Contributing Guidelines\n" +
+            $c + "\n\n" +
+            "### Publishing Guidelines\n" +
+            $p + "\n\n" +
+            "## Task\n\n" +
+            "Review the README and identify any issues, categorized by severity:\n" +
+            "- BLOCKER: Must fix before publication (missing required sections, broken links, security issues like hardcoded usernames or passwords, deployment must be easy - no emailing people for license files)\n" +
+            "- MAJOR: Should fix (structural issues, significant style violations, unclear instructions, trademark violoations (trademark mentioned ONLY the first time))\n" +
+            "- MINOR: Nice to have (minor formatting, consistency improvements)\n" +
+            "- SUGGESTION: Optional improvements (enhancements, recommendations)\n\n" +
+            "Output your findings in the following JSON structure:\n\n" +
+            "{\n" +
+            "  \"summary\": {\n" +
+            "    \"total_findings\": 0,\n" +
+            "    \"blockers\": 0,\n" +
+            "    \"major\": 0,\n" +
+            "    \"minor\": 0,\n" +
+            "    \"suggestions\": 0\n" +
+            "  },\n" +
+            "  \"findings\": [\n" +
+            "    {\n" +
+            "      \"severity\": \"blocker|major|minor|suggestion\",\n" +
+            "      \"category\": \"structure|style|content|formatting|technical\",\n" +
+            "      \"title\": \"Brief description (under 80 chars)\",\n" +
+            "      \"description\": \"Detailed explanation with references to requirements.\",\n" +
+            "      \"location\": \"Section name or approximate location in README\",\n" +
+            "      \"requirement_ref\": \"Which guideline this violates\",\n" +
+            "      \"suggested_fix\": \"Specific actionable suggestion\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
+            "If the README is excellent, it is okay to have zero findings."
+          ')
+
+          PAYLOAD=$(jq -n \
+            --arg prompt "$PROMPT_TEXT" \
+            '{
+              model: "claude-sonnet-4-5-20250929",
+              max_tokens: 8000,
+              temperature: 0,
+              messages: [{
+                role: "user",
+                content: $prompt
+              }]
+            }')
+
+          echo "Calling Claude API..."
+
+          # Call Claude API
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "$PAYLOAD")
+
+          # Check for API errors
+          if echo "$RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
+            echo "❌ Claude API error:"
+            echo "$RESPONSE" | jq -r '.error'
+            exit 1
+          fi
+
+          # Extract findings from response
+          FINDINGS=$(echo "$RESPONSE" | jq -r '.content[0].text')
+
+          echo "✅ Review complete"
+
+          # Debug: Show first few lines of response
+          echo "DEBUG: First 5 lines of Claude response:"
+          echo "$FINDINGS" | head -5
+
+          # Claude often wraps JSON in markdown code fences, strip them
+          # Look for ```json or just ``` at start
+          if echo "$FINDINGS" | grep -q '^```'; then
+            echo "DEBUG: Found code fence, extracting JSON..."
+            FINDINGS_CLEAN=$(echo "$FINDINGS" | sed -n '/^```/,/^```$/p' | sed '1d;$d')
+          else
+            echo "DEBUG: No code fence found, using original response"
+            FINDINGS_CLEAN="$FINDINGS"
+          fi
+
+          # Save findings to file
+          echo "$FINDINGS_CLEAN" > /tmp/findings.json
+
+          # Debug: Show what we're trying to parse
+          echo "DEBUG: First 3 lines of cleaned JSON:"
+          head -3 /tmp/findings.json
+
+          # Validate JSON
+          if ! jq empty /tmp/findings.json 2>/dev/null; then
+            echo "❌ ERROR: Response is not valid JSON after cleanup"
+            echo ""
+            echo "=== CLEANED RESPONSE (what we're trying to parse) ==="
+            cat /tmp/findings.json
+            echo ""
+            echo "=== ORIGINAL RESPONSE FROM CLAUDE ==="
+            echo "$FINDINGS"
+            echo ""
+            echo "=== JQ ERROR OUTPUT ==="
+            jq empty /tmp/findings.json 2>&1 || true
+            exit 1
+          fi
+
+          echo "✅ JSON validation passed"
+
+          # Extract summary from cleaned JSON file
+          TOTAL=$(jq -r '.summary.total_findings // 0' /tmp/findings.json)
+          BLOCKERS=$(jq -r '.summary.blockers // 0' /tmp/findings.json)
+          MAJOR=$(jq -r '.summary.major // 0' /tmp/findings.json)
+          MINOR=$(jq -r '.summary.minor // 0' /tmp/findings.json)
+          SUGGESTIONS=$(jq -r '.summary.suggestions // 0' /tmp/findings.json)
+
+          echo "Summary: $TOTAL findings ($BLOCKERS blockers, $MAJOR major, $MINOR minor, $SUGGESTIONS suggestions)"
+
+          # Set outputs
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "blockers=$BLOCKERS" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "suggestions=$SUGGESTIONS" >> $GITHUB_OUTPUT
+
+      - name: Post PR comment with findings
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Posting PR comment with findings..."
+
+          # Build the comment body using jq
+          jq -r --arg submodule "${{ steps.detect.outputs.path }}" \
+                --arg org "${{ steps.detect.outputs.org }}" \
+                --arg repo "${{ steps.detect.outputs.repo }}" \
+                --arg sha "${{ steps.detect.outputs.sha }}" \
+                --arg total "${{ steps.review.outputs.total }}" \
+                --arg blockers "${{ steps.review.outputs.blockers }}" \
+                --arg major "${{ steps.review.outputs.major }}" \
+                --arg minor "${{ steps.review.outputs.minor }}" \
+                --arg suggestions "${{ steps.review.outputs.suggestions }}" '
+            "## 📋 Automated Documentation Review\n\n" +
+            "**Submodule:** `" + $submodule + "`\n" +
+            "**Source Repo:** " + $org + "/" + $repo + "\n" +
+            "**Commit:** `" + $sha + "`\n\n" +
+            "---\n\n" +
+            "### 📊 Summary\n\n" +
+            "| Severity | Count |\n" +
+            "|----------|-------|\n" +
+            "| 🚫 Blockers | " + $blockers + " |\n" +
+            "| ⚠️ Major | " + $major + " |\n" +
+            "| ℹ️ Minor | " + $minor + " |\n" +
+            "| 💡 Suggestions | " + $suggestions + " |\n" +
+            "| **Total** | **" + $total + "** |\n\n" +
+            (if ($total | tonumber) == 0 then
+              "✅ **No issues found!** This README looks great.\n"
+            else
+              "---\n\n" +
+
+              # Blockers - always expanded
+              (if ($blockers | tonumber) > 0 then
+                "### 🚫 Blockers (" + $blockers + ")\n\n" +
+                ([.findings[] | select(.severity == "blocker")] | map(
+                  "#### " + .title + "\n\n" +
+                  "**Category:** " + .category + " | **Location:** " + .location + "\n\n" +
+                  .description + "\n\n" +
+                  "**Suggested Fix:** " + .suggested_fix + "\n\n" +
+                  "**Requirement:** " + .requirement_ref + "\n\n---\n"
+                ) | join("\n")) + "\n"
+              else "" end) +
+
+              # Major - collapsed
+              (if ($major | tonumber) > 0 then
+                "<details>\n<summary>⚠️ Major Issues (" + $major + ")</summary>\n\n" +
+                ([.findings[] | select(.severity == "major")] | map(
+                  "#### " + .title + "\n\n" +
+                  "**Category:** " + .category + " | **Location:** " + .location + "\n\n" +
+                  .description + "\n\n" +
+                  "**Suggested Fix:** " + .suggested_fix + "\n\n" +
+                  "**Requirement:** " + .requirement_ref + "\n\n---\n"
+                ) | join("\n")) + "\n</details>\n\n"
+              else "" end) +
+
+              # Minor - collapsed
+              (if ($minor | tonumber) > 0 then
+                "<details>\n<summary>ℹ️ Minor Issues (" + $minor + ")</summary>\n\n" +
+                ([.findings[] | select(.severity == "minor")] | map(
+                  "#### " + .title + "\n\n" +
+                  "**Category:** " + .category + " | **Location:** " + .location + "\n\n" +
+                  .description + "\n\n" +
+                  "**Suggested Fix:** " + .suggested_fix + "\n\n" +
+                  "**Requirement:** " + .requirement_ref + "\n\n---\n"
+                ) | join("\n")) + "\n</details>\n\n"
+              else "" end) +
+
+              # Suggestions - collapsed
+              (if ($suggestions | tonumber) > 0 then
+                "<details>\n<summary>💡 Suggestions (" + $suggestions + ")</summary>\n\n" +
+                ([.findings[] | select(.severity == "suggestion")] | map(
+                  "#### " + .title + "\n\n" +
+                  "**Category:** " + .category + " | **Location:** " + .location + "\n\n" +
+                  .description + "\n\n" +
+                  "**Suggested Fix:** " + .suggested_fix + "\n\n" +
+                  "**Requirement:** " + .requirement_ref + "\n\n---\n"
+                ) | join("\n")) + "\n</details>\n"
+              else "" end)
+            end) +
+            "\n\n*🤖 Automated review powered by Claude*"
+          ' /tmp/findings.json > /tmp/pr-comment.md
+
+          # Post comment to PR
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file /tmp/pr-comment.md \
+            --repo ${{ github.repository }}
+
+          echo "✅ Posted comment to PR #${{ github.event.pull_request.number }}"
+
+      - name: Display findings (dry-run)
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          echo "================================================"
+          echo "📋 DOCUMENTATION REVIEW FINDINGS (DRY-RUN)"
+          echo "================================================"
+          echo ""
+          echo "Submodule: ${{ steps.detect.outputs.path }}"
+          echo "Source: ${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}"
+          echo "Commit: ${{ steps.detect.outputs.sha }}"
+          echo ""
+          echo "Summary:"
+          echo "  Total: ${{ steps.review.outputs.total }}"
+          echo "  🚫 Blockers: ${{ steps.review.outputs.blockers }}"
+          echo "  ⚠️  Major: ${{ steps.review.outputs.major }}"
+          echo "  ℹ️  Minor: ${{ steps.review.outputs.minor }}"
+          echo "  💡 Suggestions: ${{ steps.review.outputs.suggestions }}"
+          echo ""
+          echo "================================================"
+          echo "DETAILED FINDINGS:"
+          echo "================================================"
+          echo ""
+
+          # Pretty-print each finding
+          cat /tmp/findings.json | jq -r '.findings[] |
+            "---\n" +
+            "Severity: \(.severity | ascii_upcase)\n" +
+            "Category: \(.category)\n" +
+            "Title: \(.title)\n" +
+            "Location: \(.location)\n" +
+            "Requirement: \(.requirement_ref)\n" +
+            "\n" +
+            "Description:\n\(.description)\n" +
+            "\n" +
+            "Suggested Fix:\n\(.suggested_fix)\n"'
+
+          echo ""
+          echo "================================================"
+          echo "✅ DRY-RUN COMPLETE"
+          echo "================================================"
+          echo ""
+          echo "This is a dry-run. No issues were created."
+          echo "In production mode, ${{ steps.review.outputs.total }} issues would be created in ${{ steps.detect.outputs.org }}/${{ steps.detect.outputs.repo }}"
