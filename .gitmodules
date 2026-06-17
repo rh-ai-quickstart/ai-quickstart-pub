@@ -26,3 +26,6 @@
 	path = quickstart/ansible-log-analysis
 	url = https://github.com/rh-ai-quickstart/ansible-log-analysis.git
 	branch = main
+[submodule "quickstart/peoplemesh"]
+	path = quickstart/peoplemesh
+	url = https://github.com/rh-ai-quickstart/peoplemesh.git
