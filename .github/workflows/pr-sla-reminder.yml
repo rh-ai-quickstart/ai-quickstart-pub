@@ -1,0 +1,25 @@
+name: PR SLA Reminder 
+
+on:
+  schedule: 
+    - cron: '0 9 * * 1-5' # 9am weekdays 
+  workflow_dispatch:
+
+jobs:
+  check-sla:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Check PR age and notify
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 5 # Warn 2 days before 7 day deadline
+          days-before-close: 21 # Close at 21 days of contributor inactivity
+          stale-pr-message: ':warning: **SLA reminder:** This PR has been pending review for 5 days. Human review target is 7 days.'
+          close-pr-message: 'Closing due to 21 days of inactivity after maintainer feedback. Please reopen when ready to continue.'
+          stale-pr-label: 'sla-approaching'
+          exempt-pr-labels: 'in-review,waiting-on-contributor'
+          operations-per-run: 100
