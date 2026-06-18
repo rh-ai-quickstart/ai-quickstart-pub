@@ -116,7 +116,7 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
 
         if [[ $days_since_event -ge $DAYS_AUTO_CLOSE ]]; then 
             echo "WARNING: AUTO-CLOSING: $days_since_event days of author inactivity" 
-            gh pr close $pr_number --repo "$ORG/$REPO" --comment "Closing due to $DAYS_AUTO_CLOSE days of inactivity after publication-admin feedback. Please reopen when ready to continue."
+            gh pr close $pr_number --repo "$ORG/$REPO" --comment "**CLOSING PR:** Closing due to $DAYS_AUTO_CLOSE days of inactivity after publication-admin feedback. Please reopen when ready to continue."
         fi
     else 
         echo "PR #$pr_number: waiting on ADMIN (last: ${last_person:-nobody yet})"
@@ -130,7 +130,7 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
             if ! echo "$pr_labels" | grep -q "sla-breached"; then 
                 echo " SLA BREACHED: adding sla-breached label"
                 gh pr edit $pr_number --repo "$ORG/$REPO" --add-label "sla-breached" 
-                gh pr comment $pr_number --repo "$ORG/$REPO" --body "**SLA BREACHED: This PR has been waiting for publication-admin review for $DAYS_BREACHED days."
+                gh pr comment $pr_number --repo "$ORG/$REPO" --body "**SLA BREACHED:** This PR has been waiting for publication-admin review for $DAYS_BREACHED days."
             fi
 
             if echo "$pr_labels" | grep -q "sla-approaching"; then 
