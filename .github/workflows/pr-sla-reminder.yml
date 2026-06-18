@@ -1,8 +1,8 @@
-name: PR SLA Reminder 
+name: PR SLA Reminder
 
 on:
-  schedule: 
-    - cron: '0 9 * * 1-5' # 9am weekdays 
+  schedule:
+    - cron: '0 9 * * 1-5' # 9am weekdays
   workflow_dispatch:
 
 jobs:
@@ -11,15 +11,14 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
+      contents: read
     steps:
-      - name: Check PR age and notify
-        uses: actions/stale@v9
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          days-before-stale: 5 # Warn 2 days before 7 day deadline
-          days-before-close: 21 # Close at 21 days of contributor inactivity
-          stale-pr-message: ':warning: **SLA reminder:** This PR has been pending review for 5 days. Human review target is 7 days.'
-          close-pr-message: 'Closing due to 21 days of inactivity after maintainer feedback. Please reopen when ready to continue.'
-          stale-pr-label: 'sla-approaching'
-          exempt-pr-labels: 'in-review,waiting-on-contributor'
-          operations-per-run: 100
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check PR SLAs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash .github/scripts/check-pr-sla.sh
