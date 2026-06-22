@@ -159,5 +159,4 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
 
     fi
 
-echo "::endgroup::"
 done
