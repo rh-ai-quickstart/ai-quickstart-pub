@@ -96,7 +96,7 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
     done
 
     if [[ "$is_admin" == "true" ]]; then 
-        echo "PR #$pr_number: waiting on AUTHOR (last: $last_person)"
+        echo "::group::PR #$pr_number: waiting on AUTHOR (last: $last_person) - https://www.github.com/$ORG/$REPO/pulls/$pr_number"
 
         if echo "$pr_labels" | grep -q "sla-approaching"; then 
             echo "Removing sla-approaching label"
@@ -119,7 +119,7 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
             gh pr close $pr_number --repo "$ORG/$REPO" --comment "**CLOSING PR:** Closing due to $DAYS_AUTO_CLOSE days of inactivity after publication-admin feedback. Please reopen when ready to continue."
         fi
     else 
-        echo "PR #$pr_number: waiting on ADMIN (last: ${last_person:-nobody yet})"
+        echo "::group::PR #$pr_number: waiting on ADMIN (last: ${last_person:-nobody yet}) - https://www.github.com/$ORG/$REPO/pulls/$pr_number"
 
         if echo "$pr_labels" | grep -q "waiting-on-author"; then 
             echo "Removing waiting-on-author label" 
@@ -159,5 +159,5 @@ for pr_number in $(echo "$PRs" | jq -r '.[].number'); do
 
     fi
 
-
+echo "::endgroup::"
 done
