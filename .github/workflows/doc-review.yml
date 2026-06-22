@@ -187,12 +187,14 @@ jobs:
             "### Publishing Guidelines\n" +
             $p + "\n\n" +
             "## Task\n\n" +
-            "Review the README and identify any issues, categorized by severity:\n" +
-            "- BLOCKER: Must fix before publication (missing required sections, broken links, security issues like hardcoded usernames or passwords, deployment must be easy - no emailing people for license files)\n" +
-            "- MAJOR: Should fix (structural issues, significant style violations, unclear instructions, trademark violoations (trademark mentioned ONLY the first time))\n" +
-            "- MINOR: Nice to have (minor formatting, consistency improvements)\n" +
-            "- SUGGESTION: Optional improvements (enhancements, recommendations)\n\n" +
-            "Output your findings in the following JSON structure:\n\n" +
+            "Review the README against the requirements documents above.\n\n" +
+            "**CRITICAL**: Follow the severity classification rules EXACTLY as defined in the PUBLISHING Guidelines \"Review severity levels\" section. Pay special attention to:\n" +
+            "- Character limits (title <64 chars, short description <160 chars)\n" + 
+            "- Industry tag validation against approved list\n" + 
+            "- Tag format (bulleted list, bold keys)\n" + 
+            "- Classification decision rules (when in doubt, downgrade severity)\n" + 
+            "- Common edge cases (trademark always major, etc.)\n\n" +
+            "Output ONLY valid JSON in this exact structure:\n\n" +
             "{\n" +
             "  \"summary\": {\n" +
             "    \"total_findings\": 0,\n" +
