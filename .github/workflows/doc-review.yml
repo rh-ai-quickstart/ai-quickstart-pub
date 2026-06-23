@@ -187,14 +187,42 @@ jobs:
             "### Publishing Guidelines\n" +
             $p + "\n\n" +
             "## Task\n\n" +
-            "Review the README against the requirements documents above.\n\n" +
-            "**CRITICAL**: Follow the severity classification rules EXACTLY as defined in the PUBLISHING Guidelines \"Review severity levels\" section. Pay special attention to:\n" +
-            "- Character limits (title <64 chars, short description <160 chars)\n" + 
-            "- Industry tag validation against approved list\n" + 
-            "- Tag format (bulleted list, bold keys)\n" + 
-            "- Classification decision rules (when in doubt, downgrade severity)\n" + 
-            "- Common edge cases (trademark always major, etc.)\n\n" +
-            "Output ONLY valid JSON in this exact structure:\n\n" +
+            "Review the README against the requirements documents above, following the severity classification rules in the Publishing Guidelines.\n\n" +
+
+            "**CRITICAL INSTRUCTIONS**:\n\n" +
+
+            "1. **Read the Publishing Guidelines \"Review severity levels\" section carefully**. This defines:\n" +
+            "   - BLOCKER: Security vulnerabilities, broken critical paths, impossible deployment, missing required sections, exceeding character limits, broken links, inappropriate/incorrectly formatted tags\n" +
+            "   - MAJOR: Trademark violations, structural problems, unclear instructions, significant style violations, technical inaccuracies\n" +
+            "   - MINOR: Minor formatting inconsistencies, wordiness, missing optional sections\n" +
+            "   - SUGGESTION: Style preferences, additional examples, future enhancements\n\n" +
+
+            "2. **Follow the Classification Decision Rules**:\n" +
+            "   - Default to LOWER severity when uncertain\n" +
+            "   - Trademark issues are ALWAYS major, NEVER blocker\n" +
+            "   - Only mark as blocker if it prevents deployment or poses security risk\n" +
+            "   - Use the User Impact Test from the guidelines\n\n" +
+
+            "3. **Verify EVERY finding before reporting**:\n" +
+            "   - Re-read the relevant README section to confirm the issue exists\n" +
+            "   - Check the actual content, not what you expect to see\n" +
+            "   - For missing content, verify it is truly absent (not just in a different location)\n" +
+            "   - For formatting issues, verify the actual formatting is wrong\n" +
+            "   - When in doubt, DO NOT flag the issue\n\n" +
+
+            "4. **Common verification checks**:\n" +
+            "   - Short description: Check lines 2-5 after the H1 title for a standalone paragraph\n" +
+            "   - Tags format: Verify if bullets use *, -, or + (all valid Markdown)\n" +
+            "   - Character limits: Count actual characters, not estimated\n" +
+            "   - Required sections: Check the entire README, sections may be named slightly differently\n\n" +
+
+            "5. **Apply the Common Edge Cases** from Publishing Guidelines:\n" +
+            "   - Multiple trademark violations = still Major (not Blocker)\n" +
+            "   - Typo in command that breaks it = Blocker; typo in text = Major or Minor\n" +
+            "   - Missing Troubleshooting = Major for complex deploys, Minor for simple ones\n\n" +
+
+            "Output ONLY valid JSON in this exact structure.\n\n" +
+            "CRITICAL: Do NOT wrap JSON in markdown code fences (no ```json). Do NOT add explanatory text before or after the JSON. Return ONLY the raw JSON object, nothing else.\n\n" +
             "{\n" +
             "  \"summary\": {\n" +
             "    \"total_findings\": 0,\n" +
@@ -206,17 +234,17 @@ jobs:
             "  \"findings\": [\n" +
             "    {\n" +
             "      \"severity\": \"blocker|major|minor|suggestion\",\n" +
-            "      \"category\": \"structure|style|content|formatting|technical\",\n" +
+            "      \"category\": \"structure|style|content|formatting|technical|security\",\n" +
             "      \"title\": \"Brief description (under 80 chars)\",\n" +
-            "      \"description\": \"Detailed explanation with references to requirements.\",\n" +
-            "      \"location\": \"Section name or approximate location in README\",\n" +
-            "      \"requirement_ref\": \"Which guideline this violates\",\n" +
-            "      \"suggested_fix\": \"Specific actionable suggestion\"\n" +
+            "      \"description\": \"Detailed explanation with specific evidence from the README.\",\n" +
+            "      \"location\": \"Exact section name or line reference\",\n" +
+            "      \"requirement_ref\": \"Specific guideline section from Publishing or Contributing docs\",\n" +
+            "      \"suggested_fix\": \"Specific actionable suggestion with examples\"\n" +
             "    }\n" +
             "  ]\n" +
             "}\n\n" +
-            "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
-            "If the README is excellent, it is okay to have zero findings."
+
+            "**Final reminder**: Only report issues that definitively exist after careful verification. Zero findings is acceptable for excellent READMEs. Quality over quantity."
           ')
 
           PAYLOAD=$(jq -n \
