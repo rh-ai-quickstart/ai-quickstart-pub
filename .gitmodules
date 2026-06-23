@@ -55,6 +55,3 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
-[submodule "quickstart/groundx-billing-extraction"]
-	path = quickstart/groundx-billing-extraction
-	url = https://github.com/rh-ai-quickstart/Billing-extraction-with-GroundX.git
