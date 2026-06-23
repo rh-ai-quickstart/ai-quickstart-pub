@@ -284,11 +284,21 @@ jobs:
           echo "DEBUG: First 5 lines of Claude response:"
           echo "$FINDINGS" | head -5
 
-          # Claude often wraps JSON in markdown code fences, strip them
-          # Look for ```json or just ``` at start
+          # Claude sometimes wraps JSON in markdown code fences and may return multiple JSON blocks
+          # We need to extract ONLY the last valid JSON block (the corrected one)
           if echo "$FINDINGS" | grep -q '^```'; then
             echo "DEBUG: Found code fence, extracting JSON..."
-            FINDINGS_CLEAN=$(echo "$FINDINGS" | sed -n '/^```/,/^```$/p' | sed '1d;$d')
+
+            # Extract all content between code fences, then take only the LAST JSON block
+            # This handles cases where Claude returns multiple JSON blocks with commentary
+            FINDINGS_CLEAN=$(echo "$FINDINGS" | awk '
+              /^```(json)?$/ { in_fence=1; block=""; next }
+              /^```$/ && in_fence { in_fence=0; last_block=block; next }
+              in_fence { block = block $0 "\n" }
+              END { print last_block }
+            ')
+
+            echo "DEBUG: Extracted JSON from last code fence block"
           else
             echo "DEBUG: No code fence found, using original response"
             FINDINGS_CLEAN="$FINDINGS"
