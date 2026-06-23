@@ -187,42 +187,18 @@ jobs:
             "### Publishing Guidelines\n" +
             $p + "\n\n" +
             "## Task\n\n" +
-            "Review the README against the requirements documents above, following the severity classification rules in the Publishing Guidelines.\n\n" +
+            "Review the README and classify issues using the severity levels defined in the Publishing Guidelines section \"Review severity levels\":\n\n" +
 
-            "**CRITICAL INSTRUCTIONS**:\n\n" +
+            "- BLOCKER: Security vulnerabilities, broken critical paths, impossible deployment, missing required sections, exceeding character limits (title >64, description >160), broken links, invalid/incorrectly formatted tags\n" +
+            "- MAJOR: Trademark violations (® or ™ used more than first mention), structural problems, unclear instructions, significant style violations\n" +
+            "- MINOR: Minor formatting inconsistencies, missing optional sections\n" +
+            "- SUGGESTION: Optional enhancements\n\n" +
 
-            "1. **Read the Publishing Guidelines \"Review severity levels\" section carefully**. This defines:\n" +
-            "   - BLOCKER: Security vulnerabilities, broken critical paths, impossible deployment, missing required sections, exceeding character limits, broken links, inappropriate/incorrectly formatted tags\n" +
-            "   - MAJOR: Trademark violations, structural problems, unclear instructions, significant style violations, technical inaccuracies\n" +
-            "   - MINOR: Minor formatting inconsistencies, wordiness, missing optional sections\n" +
-            "   - SUGGESTION: Style preferences, additional examples, future enhancements\n\n" +
+            "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
+            "- Trademark issues are ALWAYS major, NEVER blocker\n" +
+            "- When uncertain, use lower severity\n\n" +
 
-            "2. **Follow the Classification Decision Rules**:\n" +
-            "   - Default to LOWER severity when uncertain\n" +
-            "   - Trademark issues are ALWAYS major, NEVER blocker\n" +
-            "   - Only mark as blocker if it prevents deployment or poses security risk\n" +
-            "   - Use the User Impact Test from the guidelines\n\n" +
-
-            "3. **Verify EVERY finding before reporting**:\n" +
-            "   - Re-read the relevant README section to confirm the issue exists\n" +
-            "   - Check the actual content, not what you expect to see\n" +
-            "   - For missing content, verify it is truly absent (not just in a different location)\n" +
-            "   - For formatting issues, verify the actual formatting is wrong\n" +
-            "   - When in doubt, DO NOT flag the issue\n\n" +
-
-            "4. **Common verification checks**:\n" +
-            "   - Short description: Check lines 2-5 after the H1 title for a standalone paragraph\n" +
-            "   - Tags format: Verify if bullets use *, -, or + (all valid Markdown)\n" +
-            "   - Character limits: Count actual characters, not estimated\n" +
-            "   - Required sections: Check the entire README, sections may be named slightly differently\n\n" +
-
-            "5. **Apply the Common Edge Cases** from Publishing Guidelines:\n" +
-            "   - Multiple trademark violations = still Major (not Blocker)\n" +
-            "   - Typo in command that breaks it = Blocker; typo in text = Major or Minor\n" +
-            "   - Missing Troubleshooting = Major for complex deploys, Minor for simple ones\n\n" +
-
-            "Output ONLY valid JSON in this exact structure.\n\n" +
-            "CRITICAL: Do NOT wrap JSON in markdown code fences (no ```json). Do NOT add explanatory text before or after the JSON. Return ONLY the raw JSON object, nothing else.\n\n" +
+            "Return your findings as valid JSON (no code fences, no explanatory text):\n\n" +
             "{\n" +
             "  \"summary\": {\n" +
             "    \"total_findings\": 0,\n" +
@@ -244,11 +220,8 @@ jobs:
             "  ]\n" +
             "}\n\n" +
 
-            "**Final reminders**:\n" +
-            "1. Only report issues that definitively exist after careful verification\n" +
-            "2. Zero findings is acceptable for excellent READMEs - quality over quantity\n" +
-            "3. Return ONLY the JSON object - no code fences, no explanations, no commentary\n" +
-            "4. Start your response with { and end with } - nothing before or after"
+            "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
+            "If the README is excellent, it is okay to have zero findings."
           ')
 
           PAYLOAD=$(jq -n \
@@ -288,32 +261,11 @@ jobs:
           echo "DEBUG: First 5 lines of Claude response:"
           echo "$FINDINGS" | head -5
 
-          # Claude often wraps JSON in markdown code fences
-          # Extract the LAST complete JSON block (in case Claude returns multiple)
+          # Claude often wraps JSON in markdown code fences, strip them
+          # Look for ```json or just ``` at start
           if echo "$FINDINGS" | grep -q '^```'; then
-            echo "DEBUG: Found code fence, extracting last JSON block..."
-            FINDINGS_CLEAN=$(echo "$FINDINGS" | awk '
-              BEGIN { in_fence=0; current_block=""; last_block=""; }
-              /^```(json)?$/ { in_fence=1; current_block=""; next; }
-              /^```$/ && in_fence {
-                if (current_block != "") {
-                  last_block = current_block;
-                }
-                current_block = "";
-                in_fence=0;
-                next;
-              }
-              in_fence { current_block = current_block $0 "\n"; }
-              END {
-                # If still in fence at end (unclosed), use current block
-                if (in_fence && current_block != "") {
-                  printf "%s", current_block;
-                } else if (last_block != "") {
-                  printf "%s", last_block;
-                }
-              }
-            ')
-            echo "DEBUG: Extracted last JSON block"
+            echo "DEBUG: Found code fence, extracting JSON..."
+            FINDINGS_CLEAN=$(echo "$FINDINGS" | sed -n '/^```/,/^```$/p' | sed '1d;$d')
           else
             echo "DEBUG: No code fence found, using original response"
             FINDINGS_CLEAN="$FINDINGS"
