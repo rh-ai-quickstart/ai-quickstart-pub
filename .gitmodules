@@ -55,3 +55,6 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/redis-llm-cost-reduction"]
+	path = quickstart/redis-llm-cost-reduction
+	url = https://github.com/rh-ai-quickstart/Reducing-costs-of-AI-with-Redis-Labs.git
