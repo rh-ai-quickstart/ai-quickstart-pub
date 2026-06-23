@@ -244,7 +244,11 @@ jobs:
             "  ]\n" +
             "}\n\n" +
 
-            "**Final reminder**: Only report issues that definitively exist after careful verification. Zero findings is acceptable for excellent READMEs. Quality over quantity."
+            "**Final reminders**:\n" +
+            "1. Only report issues that definitively exist after careful verification\n" +
+            "2. Zero findings is acceptable for excellent READMEs - quality over quantity\n" +
+            "3. Return ONLY the JSON object - no code fences, no explanations, no commentary\n" +
+            "4. Start your response with { and end with } - nothing before or after"
           ')
 
           PAYLOAD=$(jq -n \
@@ -284,21 +288,32 @@ jobs:
           echo "DEBUG: First 5 lines of Claude response:"
           echo "$FINDINGS" | head -5
 
-          # Claude sometimes wraps JSON in markdown code fences and may return multiple JSON blocks
-          # We need to extract ONLY the last valid JSON block (the corrected one)
+          # Claude often wraps JSON in markdown code fences
+          # Extract the LAST complete JSON block (in case Claude returns multiple)
           if echo "$FINDINGS" | grep -q '^```'; then
-            echo "DEBUG: Found code fence, extracting JSON..."
-
-            # Extract all content between code fences, then take only the LAST JSON block
-            # This handles cases where Claude returns multiple JSON blocks with commentary
+            echo "DEBUG: Found code fence, extracting last JSON block..."
             FINDINGS_CLEAN=$(echo "$FINDINGS" | awk '
-              /^```(json)?$/ { in_fence=1; block=""; next }
-              /^```$/ && in_fence { in_fence=0; last_block=block; next }
-              in_fence { block = block $0 "\n" }
-              END { print last_block }
+              BEGIN { in_fence=0; current_block=""; last_block=""; }
+              /^```(json)?$/ { in_fence=1; current_block=""; next; }
+              /^```$/ && in_fence {
+                if (current_block != "") {
+                  last_block = current_block;
+                }
+                current_block = "";
+                in_fence=0;
+                next;
+              }
+              in_fence { current_block = current_block $0 "\n"; }
+              END {
+                # If still in fence at end (unclosed), use current block
+                if (in_fence && current_block != "") {
+                  printf "%s", current_block;
+                } else if (last_block != "") {
+                  printf "%s", last_block;
+                }
+              }
             ')
-
-            echo "DEBUG: Extracted JSON from last code fence block"
+            echo "DEBUG: Extracted last JSON block"
           else
             echo "DEBUG: No code fence found, using original response"
             FINDINGS_CLEAN="$FINDINGS"
