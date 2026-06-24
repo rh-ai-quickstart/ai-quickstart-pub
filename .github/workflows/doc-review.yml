@@ -189,11 +189,8 @@ jobs:
             "## Task\n\n" +
             "Review the README and classify issues using the severity levels defined in the Publishing Guidelines section \"Review severity levels\":\n\n" +
 
-            "- BLOCKER: Security vulnerabilities, broken critical paths, impossible deployment, missing required sections, exceeding character limits (title >64, description >160), broken links, invalid/incorrectly formatted tags\n" +
-            "- MAJOR: Trademark violations (® or ™ used more than first mention), structural problems, unclear instructions, significant style violations\n" +
-            "- MINOR: Minor formatting inconsistencies, missing optional sections\n" +
-            "- SUGGESTION: Optional enhancements\n\n" +
-
+            "Pay close attention to formatting and characert lengths. Double check lengths before moving to the next task. \n\n" +
+            
             "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
             "- Trademark issues are ALWAYS major, NEVER blocker\n" +
             "- When uncertain, use lower severity\n\n" +
