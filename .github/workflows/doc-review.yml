@@ -206,7 +206,10 @@ jobs:
             "- Issues must be treated separately. For example, a H1 title that exceeds 64 characters AND includes multiple trademark symbols is 2 distinct issues. DO NOT collapse issues into a single issue. \n" +
             "- When uncertain, use lower severity\n\n" +
 
-            "Return your findings as valid JSON (no code fences, no explanatory text):\n\n" +
+            "## Output Format\n\n" +
+            "CRITICAL: Your response MUST be ONLY valid JSON. No thinking, no explanations, no markdown fences.\n" +
+            "Your entire response must be parseable by jq. Do NOT include any text before or after the JSON object.\n\n" +
+            "Return this exact structure:\n\n" +
             "{\n" +
             "  \"summary\": {\n" +
             "    \"total_findings\": 0,\n" +
@@ -228,8 +231,8 @@ jobs:
             "  ]\n" +
             "}\n\n" +
 
-            "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
-            "If the README is excellent, it is okay to have zero findings."
+            "Be specific and actionable in the description fields. Reference the actual requirement documents.\n" +
+            "If the README is excellent, return zero findings. START your response with { and END with }"
           ')
 
           PAYLOAD=$(jq -n \
