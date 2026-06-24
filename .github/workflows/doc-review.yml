@@ -189,11 +189,21 @@ jobs:
             "## Task\n\n" +
             "Review the README and classify issues using the severity levels defined in the Publishing Guidelines section \"Review severity levels\":\n\n" +
 
-            "Pay close attention to formatting and H1 title and short description character lengths. \n\n" +
-            
+            "## Character Count Instructions\n\n" +
+            "CRITICAL: Before flagging any character limit violations, you MUST:\n" +
+            "1. Quote the EXACT text you are measuring\n" +
+            "2. Count every character manually (including spaces, punctuation, HTML entities like &reg;)\n" +
+            "3. For H1 title: count ONLY the text after the '# ' markdown prefix\n" +
+            "4. For short description: count the entire line as-is from the source\n" +
+            "5. Show your counting work in the description field before claiming a violation\n" +
+            "6. ONLY flag as blocker if you can demonstrate the count exceeds the limit\n\n" +
+            "Character limits:\n" +
+            "- H1 title: Maximum 64 characters (text only, exclude '# ' prefix)\n" +
+            "- Short description: Maximum 160 characters (full text)\n\n" +
+
             "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
             "- Trademark issues are ALWAYS major, NEVER blocker\n" +
-            "- Issues must be treated separately. For example, a H1 title that exceeds 64 characters AND includes multiple trademark symbols is 2 destinct issues. DO NOT collapse issues into a single issue. \n" +
+            "- Issues must be treated separately. For example, a H1 title that exceeds 64 characters AND includes multiple trademark symbols is 2 distinct issues. DO NOT collapse issues into a single issue. \n" +
             "- When uncertain, use lower severity\n\n" +
 
             "Return your findings as valid JSON (no code fences, no explanatory text):\n\n" +
