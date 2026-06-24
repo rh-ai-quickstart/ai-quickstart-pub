@@ -193,12 +193,12 @@ jobs:
             "CRITICAL: Before flagging any character limit violations, you MUST:\n" +
             "1. Quote the EXACT text you are measuring\n" +
             "2. Count every character manually (including spaces, punctuation, HTML entities like &reg;)\n" +
-            "3. For H1 title: count ONLY the text after the '# ' markdown prefix\n" +
+            "3. For H1 title: count ONLY the text after the markdown prefix (# followed by space)\n" +
             "4. For short description: count the entire line as-is from the source\n" +
             "5. Show your counting work in the description field before claiming a violation\n" +
             "6. ONLY flag as blocker if you can demonstrate the count exceeds the limit\n\n" +
             "Character limits:\n" +
-            "- H1 title: Maximum 64 characters (text only, exclude '# ' prefix)\n" +
+            "- H1 title: Maximum 64 characters (text only, exclude markdown prefix)\n" +
             "- Short description: Maximum 160 characters (full text)\n\n" +
 
             "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
