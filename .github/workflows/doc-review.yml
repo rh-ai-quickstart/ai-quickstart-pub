@@ -189,7 +189,7 @@ jobs:
             "## Task\n\n" +
             "Review the README and classify issues using the severity levels defined in the Publishing Guidelines section \"Review severity levels\":\n\n" +
 
-            "Pay close attention to formatting and characert lengths. Double check lengths before moving to the next task. \n\n" +
+            "Pay close attention to formatting and H1 title and short description character lengths. \n\n" +
             
             "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
             "- Trademark issues are ALWAYS major, NEVER blocker\n" +
