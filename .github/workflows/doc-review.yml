@@ -193,6 +193,7 @@ jobs:
             
             "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
             "- Trademark issues are ALWAYS major, NEVER blocker\n" +
+            "- Issues must be treated separately. For example, a H1 title that exceeds 64 characters AND includes multiple trademark symbols is 2 destinct issues. DO NOT collapse issues into a single issue. \n" +
             "- When uncertain, use lower severity\n\n" +
 
             "Return your findings as valid JSON (no code fences, no explanatory text):\n\n" +
