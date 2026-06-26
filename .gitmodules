@@ -55,3 +55,6 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/portfolio-manager-agent"]
+	path = quickstart/portfolio-manager-agent
+	url = https://github.com/rh-ai-quickstart/portfolio-manager-agent.git
