@@ -55,3 +55,6 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/peoplemesh"]
+	path = quickstart/peoplemesh
+	url = https://github.com/rh-ai-quickstart/peoplemesh.git
