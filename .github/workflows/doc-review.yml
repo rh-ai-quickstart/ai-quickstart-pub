@@ -187,12 +187,18 @@ jobs:
             "### Publishing Guidelines\n" +
             $p + "\n\n" +
             "## Task\n\n" +
-            "Review the README and identify any issues, categorized by severity:\n" +
-            "- BLOCKER: Must fix before publication (missing required sections, broken links, security issues like hardcoded usernames or passwords, deployment must be easy - no emailing people for license files)\n" +
-            "- MAJOR: Should fix (structural issues, significant style violations, unclear instructions, trademark violoations (trademark mentioned ONLY the first time))\n" +
-            "- MINOR: Nice to have (minor formatting, consistency improvements)\n" +
-            "- SUGGESTION: Optional improvements (enhancements, recommendations)\n\n" +
-            "Output your findings in the following JSON structure:\n\n" +
+            "Review the README and classify issues using the severity levels defined in the Publishing Guidelines section \"Review severity levels\":\n\n" +
+
+            "- BLOCKER: Security vulnerabilities, broken critical paths, impossible deployment, missing required sections, exceeding character limits (title >64, description >160), broken links, invalid/incorrectly formatted tags\n" +
+            "- MAJOR: Trademark violations (® or ™ used more than first mention), structural problems, unclear instructions, significant style violations\n" +
+            "- MINOR: Minor formatting inconsistencies, missing optional sections\n" +
+            "- SUGGESTION: Optional enhancements\n\n" +
+
+            "Apply the Classification Decision Rules from Publishing Guidelines:\n" +
+            "- Trademark issues are ALWAYS major, NEVER blocker\n" +
+            "- When uncertain, use lower severity\n\n" +
+
+            "Return your findings as valid JSON (no code fences, no explanatory text):\n\n" +
             "{\n" +
             "  \"summary\": {\n" +
             "    \"total_findings\": 0,\n" +
@@ -204,15 +210,16 @@ jobs:
             "  \"findings\": [\n" +
             "    {\n" +
             "      \"severity\": \"blocker|major|minor|suggestion\",\n" +
-            "      \"category\": \"structure|style|content|formatting|technical\",\n" +
+            "      \"category\": \"structure|style|content|formatting|technical|security\",\n" +
             "      \"title\": \"Brief description (under 80 chars)\",\n" +
-            "      \"description\": \"Detailed explanation with references to requirements.\",\n" +
-            "      \"location\": \"Section name or approximate location in README\",\n" +
-            "      \"requirement_ref\": \"Which guideline this violates\",\n" +
-            "      \"suggested_fix\": \"Specific actionable suggestion\"\n" +
+            "      \"description\": \"Detailed explanation with specific evidence from the README.\",\n" +
+            "      \"location\": \"Exact section name or line reference\",\n" +
+            "      \"requirement_ref\": \"Specific guideline section from Publishing or Contributing docs\",\n" +
+            "      \"suggested_fix\": \"Specific actionable suggestion with examples\"\n" +
             "    }\n" +
             "  ]\n" +
             "}\n\n" +
+
             "Be specific and actionable. Reference the actual requirement documents where applicable.\n" +
             "If the README is excellent, it is okay to have zero findings."
           ')
