@@ -1,0 +1,31 @@
+name: PR SLA Reminder
+
+on:
+  schedule:
+    - cron: '0 9 * * 1-5' # 9am weekdays
+  workflow_dispatch:
+
+jobs:
+  check-sla:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Check PR SLAs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash .github/scripts/check-pr-sla.sh
