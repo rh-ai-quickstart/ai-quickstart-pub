@@ -42,6 +42,9 @@
 [submodule "quickstart/aml-rag-nvidia"]
 	path = quickstart/aml-rag-nvidia
 	url = https://github.com/rh-ai-quickstart/aml-rag-nvidia.git
+[submodule "quickstart/multimodal-compliance-monitor"]
+	path = quickstart/multimodal-compliance-monitor
+	url = https://github.com/rh-ai-quickstart/multimodal-compliance-monitor.git
 [submodule "quickstart/lemonade-stand-assistant"]
 	path = quickstart/lemonade-stand-assistant
 	url = https://github.com/rh-ai-quickstart/lemonade-stand-assistant.git
@@ -58,3 +61,9 @@
 [submodule "quickstart/smart-telemetry-pipeline"]
 	path = quickstart/smart-telemetry-pipeline
 	url = https://github.com/rh-ai-quickstart/smart-telemetry-pipeline.git
+[submodule "quickstart/peoplemesh"]
+	path = quickstart/peoplemesh
+	url = https://github.com/rh-ai-quickstart/peoplemesh.git
+[submodule "quickstart/portfolio-manager-agent"]
+	path = quickstart/portfolio-manager-agent
+	url = https://github.com/rh-ai-quickstart/portfolio-manager-agent.git
