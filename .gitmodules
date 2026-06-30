@@ -58,6 +58,9 @@
 	path = quickstart/rh-research
 	url = https://github.com/rh-ai-quickstart/rh-research.git
 	branch = quickstart
+[submodule "quickstart/smart-telemetry-pipeline"]
+	path = quickstart/smart-telemetry-pipeline
+	url = https://github.com/rh-ai-quickstart/smart-telemetry-pipeline.git
 [submodule "quickstart/peoplemesh"]
 	path = quickstart/peoplemesh
 	url = https://github.com/rh-ai-quickstart/peoplemesh.git
