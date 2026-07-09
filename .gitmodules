@@ -67,3 +67,6 @@
 [submodule "quickstart/portfolio-manager-agent"]
 	path = quickstart/portfolio-manager-agent
 	url = https://github.com/rh-ai-quickstart/portfolio-manager-agent.git
+[submodule "quickstart/dagshub-unified-ai-development"]
+	path = quickstart/dagshub-unified-ai-development
+	url = https://github.com/rh-ai-quickstart/dagshub-ai-dev-platform-support.git
