@@ -67,6 +67,9 @@
 [submodule "quickstart/portfolio-manager-agent"]
 	path = quickstart/portfolio-manager-agent
 	url = https://github.com/rh-ai-quickstart/portfolio-manager-agent.git
+[submodule "quickstart/model-evaluation"]
+	path = quickstart/model-evaluation
+	url = https://github.com/rh-ai-quickstart/model-evaluation.git
 [submodule "quickstart/CAIsat"]
 	path = quickstart/CAIsat
 	url = https://github.com/rh-ai-quickstart/CAIsat.git
