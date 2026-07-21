@@ -76,3 +76,6 @@
 [submodule "quickstart/speeding-up-ticket-resolution"]
 	path = quickstart/speeding-up-ticket-resolution
 	url = https://github.com/rh-ai-quickstart/speeding-up-ticket-resolution.git
+[submodule "quickstart/fraud-detection-with-lakefs"]
+	path = quickstart/fraud-detection-with-lakefs
+	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
