@@ -79,3 +79,6 @@
 [submodule "quickstart/agentic-software-factory"]
 	path = quickstart/agentic-software-factory
 	url = https://github.com/rh-ai-quickstart/agentic-software-factory.git
+[submodule "quickstart/groundx-billing-extraction"]
+	path = quickstart/groundx-billing-extraction
+	url = https://github.com/rh-ai-quickstart/Billing-extraction-with-GroundX.git
