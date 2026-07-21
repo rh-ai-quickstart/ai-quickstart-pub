@@ -79,3 +79,6 @@
 [submodule "quickstart/fraud-detection-with-lakefs"]
 	path = quickstart/fraud-detection-with-lakefs
 	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
+[submodule "quickstart/agentic-software-factory"]
+	path = quickstart/agentic-software-factory
+	url = https://github.com/rh-ai-quickstart/agentic-software-factory.git
