@@ -76,3 +76,6 @@
 [submodule "quickstart/speeding-up-ticket-resolution"]
 	path = quickstart/speeding-up-ticket-resolution
 	url = https://github.com/rh-ai-quickstart/speeding-up-ticket-resolution.git
+[submodule "quickstart/agentic-software-factory"]
+	path = quickstart/agentic-software-factory
+	url = https://github.com/rh-ai-quickstart/agentic-software-factory.git
