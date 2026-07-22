@@ -24,6 +24,10 @@ jobs:
           fetch-depth: 0 
           allow-unsafe-pr-checkout: true
 
+      - name: Author association 
+        run: | 
+          echo "author association: ${{ github.event.pull_request.author_association }}"
+
       - name: Validate submodule naming 
         run: | 
           DIFF_OUTPUT=$(git diff origin/main -- .gitmodules | grep '^+' | grep -v '^+++')
