@@ -73,6 +73,9 @@
 [submodule "quickstart/CAIsat"]
 	path = quickstart/CAIsat
 	url = https://github.com/rh-ai-quickstart/CAIsat.git
+[submodule "quickstart/dagshub-ai-dev-platform-support"]
+	path = quickstart/dagshub-ai-dev-platform-support
+	url = https://github.com/rh-ai-quickstart/dagshub-ai-dev-platform-support.git
 [submodule "quickstart/speeding-up-ticket-resolution"]
 	path = quickstart/speeding-up-ticket-resolution
 	url = https://github.com/rh-ai-quickstart/speeding-up-ticket-resolution.git
