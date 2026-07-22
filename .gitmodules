@@ -77,5 +77,5 @@
 	path = quickstart/speeding-up-ticket-resolution
 	url = https://github.com/rh-ai-quickstart/speeding-up-ticket-resolution.git
 [submodule "quickstart/redis-llm-cost-savings"]
-	path = quickstart/redis-llm-cost-savings
+	path = quickstart/Reducing-costs-of-AI-with-Redis-Labs
 	url = https://github.com/rh-ai-quickstart/Reducing-costs-of-AI-with-Redis-Labs.git
