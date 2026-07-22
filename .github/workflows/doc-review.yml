@@ -47,7 +47,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     needs: submodule-checker 
-    if: >
+    if: >-
       github.event.pull_request.author_association == 'MEMBER' || 
       github.event.pull_request.author_association == 'OWNER'
     steps:
