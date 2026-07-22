@@ -53,12 +53,12 @@ jobs:
         env: 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         run: | 
-          AUTHOR="${{ github.event.pull_request.user.login }}"
-          STATUS=$(gh api orgs/rh-ai-quickstart/members/$AUTHOR --silent 2>/dev/null && echo "member" || echo "not_member")
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          ASSOC=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} --jq '.author_association')
+          echo "association=$ASSOC"
+          echo "association=$ASSOC" >> $GITHUB_OUTPUT
 
       - name: Checkout PR with submodules
-        if: steps.membership.outputs.status == 'member'
+        if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -67,6 +67,7 @@ jobs:
           allow-unsafe-pr-checkout: true
 
       - name: Detect changed submodule
+        if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER' 
         id: detect
         run: |
           echo "Detecting changed submodules in quickstart/"
@@ -138,7 +139,9 @@ jobs:
 
       - name: Extract README from submodule
         id: readme
-        if: steps.detect.outputs.changed == 'true'
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           SUBMODULE_PATH="${{ steps.detect.outputs.path }}"
           README_PATH="$SUBMODULE_PATH/README.md"
@@ -159,7 +162,9 @@ jobs:
 
       - name: Fetch requirements from ai-quickstart-contrib
         id: requirements
-        if: steps.detect.outputs.changed == 'true'
+        if: >-
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           echo "Fetching requirements documentation..."
 
@@ -192,7 +197,9 @@ jobs:
 
       - name: Review with Claude API
         id: review
-        if: steps.detect.outputs.changed == 'true'
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -353,8 +360,10 @@ jobs:
           echo "minor=$MINOR" >> $GITHUB_OUTPUT
           echo "suggestions=$SUGGESTIONS" >> $GITHUB_OUTPUT
 
-      - name: Post PR comment with findings
-        if: steps.detect.outputs.changed == 'true'
+      - name: Post PR comment with findings 
+        if: >- 
+          steps.detect.outputs.changed == 'true' &&
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -446,8 +455,10 @@ jobs:
 
           echo "✅ Posted comment to PR #${{ github.event.pull_request.number }}"
 
-      - name: Display findings (dry-run)
-        if: steps.detect.outputs.changed == 'true'
+      - name: Display findings (dry-run) 
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           echo "================================================"
           echo "📋 DOCUMENTATION REVIEW FINDINGS (DRY-RUN)"
