@@ -13,8 +13,39 @@ permissions:
   pull-requests: write
 
 jobs:
+  submodule-checker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR with submodules 
+        uses: actions/checkout@v4
+        with: 
+          ref: ${{ github.event.pull_request.head.sha || github.ref }} 
+          fetch-depth: 0 
+
+      - name: Validate submodule naming 
+        run: | 
+          DIFF_OUTPUT=$(git diff origin/main -- .gitmodules | grep '^+' | grep -v '^+++')
+          
+          # Confirm only one submodule added 
+          LINE_COUNT=$(echo "$DIFF_OUTPUT" | wc -l | tr -d ' ')
+          if [ "$LINE_COUNT" -ne 3 ]; then 
+            echo "::error::Expected 3 lines in .gitmodules diff (block, path, url), got $LINE_COUNT"
+            exit 1
+          fi
+
+          BLOCK_NAME=$(echo "$DIFF_OUTPUT" | grep '^+\[submodule' | sed 's/.*"quickstart\/\(.*\)".*/\1/')
+          PATH_NAME=$(echo "$DIFF_OUTPUT" | grep 'path = ' | sed 's/.*quickstart\/\(.*\)/\1/')
+          URL_NAME=$(echo "$DIFF_OUTPUT" | grep 'url = ' | sed 's/.*rh-ai-quickstart\/\(.*\)\.git/\1/')
+
+          if [ "$BLOCK_NAME" != "$PATH_NAME" ] || [ "$BLOCK_NAME" != "$URL_NAME" ]; then 
+            echo "::error::Submodule name mismatch: block='$BLOCK_NAME', path='$PATH_NAME', url='$URL_NAME'"
+            exit 1 
+          fi
+
   review:
     runs-on: ubuntu-latest
+    needs: submodule-checker 
 
     steps:
       - name: Checkout PR with submodules
