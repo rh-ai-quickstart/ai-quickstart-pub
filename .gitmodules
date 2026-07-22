@@ -73,6 +73,6 @@
 [submodule "quickstart/CAIsat"]
 	path = quickstart/CAIsat
 	url = https://github.com/rh-ai-quickstart/CAIsat.git
-[submodule "quickstart/dagshub-ai-chatbot-exprimentation"]
-	path = quickstart/dagshub-ai-chatbot-exprimentation
+[submodule "quickstart/dagshub-ai-dev-platform-support"]
+	path = quickstart/dagshub-ai-dev-platform-support
 	url = https://github.com/rh-ai-quickstart/dagshub-ai-dev-platform-support.git
