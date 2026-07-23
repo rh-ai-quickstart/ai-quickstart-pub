@@ -64,6 +64,12 @@ jobs:
           STATUS=$(gh api orgs/rh-ai-quickstart/members/$AUTHOR --silent 2>/dev/null && echo "MEMBER" || echo "NONE")
           echo "association=$STATUS" >> $GITHUB_OUTPUT
 
+      - name: Reject non-member PR 
+        if: steps.membership.outputs.association != 'MEMBER'
+        run: | 
+          echo "::error::PR author is not an AI quickstart organization member. Documentation review requires membership."
+          exit 1
+
       - name: Checkout PR with submodules
         if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER'
         uses: actions/checkout@v4
