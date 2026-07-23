@@ -85,6 +85,9 @@
 [submodule "quickstart/agentic-software-factory"]
 	path = quickstart/agentic-software-factory
 	url = https://github.com/rh-ai-quickstart/agentic-software-factory.git
+[submodule "quickstart/Billing-extraction-with-GroundX"]
+	path = quickstart/Billing-extraction-with-GroundX
+	url = https://github.com/rh-ai-quickstart/Billing-extraction-with-GroundX.git
 [submodule "quickstart/Fraud-Detection-data-versioning-with-lakeFS"]
 	path = quickstart/Fraud-Detection-data-versioning-with-lakeFS
 	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
