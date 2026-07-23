@@ -88,3 +88,6 @@
 [submodule "quickstart/Fraud-Detection-data-versioning-with-lakeFS"]
 	path = quickstart/Fraud-Detection-data-versioning-with-lakeFS
 	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
+[submodule "quickstart/Evaluate-agents-with-gaussia-evalhub"]
+	path = quickstart/Evaluate-agents-with-gaussia-evalhub
+	url = https://github.com/rh-ai-quickstart/Evaluate-agents-with-gaussia-evalhub.git
