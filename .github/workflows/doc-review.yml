@@ -48,14 +48,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: submodule-checker 
     steps:
+      - name: Generate app token 
+        id: app-token 
+        uses: actions/create-github-app-token@v1 
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Check org membership 
         id: membership 
         env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }} 
         run: | 
-          ASSOC=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} --jq '.author_association')
-          echo "association=$ASSOC"
-          echo "association=$ASSOC" >> $GITHUB_OUTPUT
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          STATUS=$(gh api orgs/rh-ai-quickstart/members/$AUTHOR --silent 2>/dev/null && echo "MEMBER" || echo "NONE")
+          echo "association=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Checkout PR with submodules
         if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER'
