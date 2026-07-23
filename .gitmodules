@@ -88,3 +88,6 @@
 [submodule "quickstart/Fraud-Detection-data-versioning-with-lakeFS"]
 	path = quickstart/Fraud-Detection-data-versioning-with-lakeFS
 	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
+[submodule "quickstart/ai-quickstart-template"]
+	path = quickstart/ai-quickstart-template
+	url = https://github.com/rh-ai-quickstart/ai-quickstart-template.git
