@@ -88,3 +88,6 @@
 [submodule "quickstart/Fraud-Detection-data-versioning-with-lakeFS"]
 	path = quickstart/Fraud-Detection-data-versioning-with-lakeFS
 	url = https://github.com/rh-ai-quickstart/Fraud-Detection-data-versioning-with-lakeFS.git
+[submodule "quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo"]
+	path = quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo
+	url = https://github.com/rh-ai-quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo.git
