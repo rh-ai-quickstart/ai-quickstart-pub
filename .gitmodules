@@ -91,3 +91,6 @@
 [submodule "quickstart/Evaluate-agents-with-gaussia-evalhub"]
 	path = quickstart/Evaluate-agents-with-gaussia-evalhub
 	url = https://github.com/rh-ai-quickstart/Evaluate-agents-with-gaussia-evalhub.git
+[submodule "quickstart/private-coding-assistant"]
+	path = quickstart/private-coding-assistant
+	url = https://github.com/rh-ai-quickstart/private-coding-assistant.git
