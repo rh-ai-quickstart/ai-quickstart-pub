@@ -97,3 +97,6 @@
 [submodule "quickstart/private-coding-assistant"]
 	path = quickstart/private-coding-assistant
 	url = https://github.com/rh-ai-quickstart/private-coding-assistant.git
+[submodule "quickstart/codvo_agentic_lease_mgmt"]
+	path = quickstart/codvo_agentic_lease_mgmt
+	url = https://github.com/rh-ai-quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo.git
