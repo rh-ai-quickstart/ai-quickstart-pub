@@ -13,18 +13,81 @@ permissions:
   pull-requests: write
 
 jobs:
-  review:
+  submodule-checker:
+    if: contains(github.event.pull_request.changed_files, '.gitmodules')
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout PR with submodules 
+        uses: actions/checkout@v4
+        with: 
+          ref: ${{ github.event.pull_request.head.sha || github.ref }} 
+          fetch-depth: 0 
+          allow-unsafe-pr-checkout: true
+
+      - name: Validate submodule naming 
+        run: | 
+          DIFF_OUTPUT=$(git diff origin/main -- .gitmodules | grep '^+' | grep -v '^+++')
+          
+          if [ -z "$DIFF_OUTPUT" ]; then 
+            echo "No .gitmodules changes detected, skipping validation"
+            exit 0 
+          fi 
+
+          # Confirm only one submodule added 
+          LINE_COUNT=$(echo "$DIFF_OUTPUT" | wc -l | tr -d ' ')
+          if [ "$LINE_COUNT" -ne 3 ]; then 
+            echo "::error::Expected 3 lines in .gitmodules diff (block, path, url), got $LINE_COUNT"
+            exit 1
+          fi
+
+          BLOCK_NAME=$(echo "$DIFF_OUTPUT" | grep '^+\[submodule' | sed 's/.*"quickstart\/\(.*\)".*/\1/')
+          PATH_NAME=$(echo "$DIFF_OUTPUT" | grep 'path = ' | sed 's/.*quickstart\/\(.*\)/\1/')
+          URL_NAME=$(echo "$DIFF_OUTPUT" | grep 'url = ' | sed 's/.*rh-ai-quickstart\/\(.*\)\.git/\1/')
+
+          if [ "$BLOCK_NAME" != "$PATH_NAME" ] || [ "$BLOCK_NAME" != "$URL_NAME" ]; then 
+            echo "::error::Submodule name mismatch: block='$BLOCK_NAME', path='$PATH_NAME', url='$URL_NAME'"
+            exit 1 
+          fi
+
+  review:
+    runs-on: ubuntu-latest
+    needs: submodule-checker 
+    if: always() && (needs.submodule-checker.result == 'success') || needs.submodule-checker.result == 'skipped'
+    steps:
+      - name: Generate app token 
+        id: app-token 
+        uses: actions/create-github-app-token@v1 
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Check org membership 
+        id: membership 
+        env: 
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }} 
+        run: | 
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          STATUS=$(gh api orgs/rh-ai-quickstart/members/$AUTHOR --silent 2>/dev/null && echo "MEMBER" || echo "NONE")
+          echo "association=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: Reject non-member PR 
+        if: steps.membership.outputs.association != 'MEMBER'
+        run: | 
+          echo "::error::PR author is not an AI quickstart organization member. Documentation review requires membership."
+          exit 1
+
       - name: Checkout PR with submodules
+        if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
           fetch-depth: 0
           submodules: true  # Only checkout immediate submodules, not nested
+          allow-unsafe-pr-checkout: true
 
       - name: Detect changed submodule
+        if: steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER' 
         id: detect
         run: |
           echo "Detecting changed submodules in quickstart/"
@@ -96,7 +159,9 @@ jobs:
 
       - name: Extract README from submodule
         id: readme
-        if: steps.detect.outputs.changed == 'true'
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           SUBMODULE_PATH="${{ steps.detect.outputs.path }}"
           README_PATH="$SUBMODULE_PATH/README.md"
@@ -117,7 +182,9 @@ jobs:
 
       - name: Fetch requirements from ai-quickstart-contrib
         id: requirements
-        if: steps.detect.outputs.changed == 'true'
+        if: >-
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           echo "Fetching requirements documentation..."
 
@@ -150,7 +217,9 @@ jobs:
 
       - name: Review with Claude API
         id: review
-        if: steps.detect.outputs.changed == 'true'
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -324,8 +393,10 @@ jobs:
           echo "minor=$MINOR" >> $GITHUB_OUTPUT
           echo "suggestions=$SUGGESTIONS" >> $GITHUB_OUTPUT
 
-      - name: Post PR comment with findings
-        if: steps.detect.outputs.changed == 'true'
+      - name: Post PR comment with findings 
+        if: >- 
+          steps.detect.outputs.changed == 'true' &&
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -417,8 +488,10 @@ jobs:
 
           echo "✅ Posted comment to PR #${{ github.event.pull_request.number }}"
 
-      - name: Display findings (dry-run)
-        if: steps.detect.outputs.changed == 'true'
+      - name: Display findings (dry-run) 
+        if: >- 
+          steps.detect.outputs.changed == 'true' && 
+          (steps.membership.outputs.association == 'MEMBER' || steps.membership.outputs.association == 'OWNER')
         run: |
           echo "================================================"
           echo "📋 DOCUMENTATION REVIEW FINDINGS (DRY-RUN)"
