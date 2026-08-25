@@ -53,6 +53,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     needs: submodule-checker 
+    if: always() && (needs.submodule-checker.result == 'success') || needs.submodule-checker.result == 'skipped'
     steps:
       - name: Generate app token 
         id: app-token 
