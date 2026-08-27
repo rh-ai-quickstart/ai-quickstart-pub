@@ -1,6 +1,6 @@
 ## :warning: WARNING: PR Target branch 
 
-### :siren: This PR does not target `main` branch
+### :x: This PR does not target `main` branch
 
 **Current target:** `${TARGET_BRANCH}`
 **Expected target:** `main`
@@ -22,4 +22,4 @@ AI quickstarts are only published when merged to `main`. Other branches are rese
 
 --- 
 
-* :robot: *This is an automated check to prevent accidental merges to non-main branches.*
+:robot: *This is an automated check to prevent accidental merges to non-main branches.*
