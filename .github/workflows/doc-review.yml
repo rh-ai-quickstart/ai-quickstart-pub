@@ -13,6 +13,43 @@ permissions:
   pull-requests: write
 
 jobs:
+  branch-checker:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Check target branch
+        id: target-branch-check 
+        run: | 
+          TARGET_BRANCH="${{ github.base_ref }}"
+          echo "PR is targeting: $TARGET_BRANCH" 
+
+          if [ "$TARGET_BRANCH" != "main" ]; then 
+            echo "WARNING: This PR is targeting '$TARGET_BRANCH' instead of 'main'" 
+            echo "non_main_target=true" >> $GITHUB_OUTPUT
+          else 
+            echo "PR is correctly targeting main branch" 
+            echo "non_main_target=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Checkout repository 
+        if: steps.target-branch-check.outputs.non_main_target == 'true' 
+        uses: actions/checkout@v4
+
+      - name: Post warning comment for non-main target 
+        if: steps.target-branch-check.outputs.non_main_target == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+        run: | 
+          envsubst < .github/templates/branch-warning.md | \
+            gh pr comment ${{ github.event.pull_request.number }} --body-file - --repo ${{ github.repository }}
+
+      - name: Fail if not targeting main 
+        if: steps.target-branch-check.outputs.non_main_target == 'true' 
+        run: | 
+          echo "::error::PR is targeting '${{ github.base_ref }}' instead of 'main'"
+          exit 1
+
+
   submodule-checker:
     if: contains(github.event.pull_request.changed_files, '.gitmodules')
     runs-on: ubuntu-latest
@@ -53,7 +90,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     needs: submodule-checker 
-    if: always() && (needs.submodule-checker.result == 'success') || needs.submodule-checker.result == 'skipped'
+    if: always() && (needs.submodule-checker.result == 'success' || needs.submodule-checker.result == 'skipped')
     steps:
       - name: Generate app token 
         id: app-token 
@@ -72,7 +109,7 @@ jobs:
           echo "association=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Reject non-member PR 
-        if: steps.membership.outputs.association != 'MEMBER'
+        if: steps.membership.outputs.association != 'MEMBER' && steps.membership.outputs.association != 'OWNER'
         run: | 
           echo "::error::PR author is not an AI quickstart organization member. Documentation review requires membership."
           exit 1
