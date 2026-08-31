@@ -100,3 +100,6 @@
 [submodule "quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo"]
 	path = quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo
 	url = https://github.com/rh-ai-quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo.git
+[submodule "quickstart/billing-extraction-with-groundx"]
+	path = quickstart/billing-extraction-with-groundx
+	url = https://github.com/rh-ai-quickstart/Billing-extraction-with-GroundX.git
