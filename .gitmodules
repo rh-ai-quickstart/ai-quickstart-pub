@@ -100,3 +100,6 @@
 [submodule "quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo"]
 	path = quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo
 	url = https://github.com/rh-ai-quickstart/Agentic-Lease-Management-and-Reconciliation-with-Codvo.git
+[submodule "quickstart/elastic-3am-alert-killer"]
+	path = quickstart/elastic-3am-alert-killer
+	url = https://github.com/rh-ai-quickstart/elastic-3am-alert-killer.git
