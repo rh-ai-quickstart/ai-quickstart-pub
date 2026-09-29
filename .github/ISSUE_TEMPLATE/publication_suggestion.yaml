@@ -37,7 +37,6 @@ body:
         - label: README is complete and follows template structure
         - label: Quickstart runs end-to-end without errors and is reproducible
         - label: Titles, descriptions, and tags adhere to MIST guidelines
-        - label: Insert redhat(dot)com requirements here
         - label: Technical review complete
         - label: Peer review complete
         - label: Known issues and requests are documented (or resolved)
