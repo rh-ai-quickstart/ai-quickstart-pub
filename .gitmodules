@@ -110,3 +110,6 @@
 	path = quickstart/agentic-partners-integration
 	url = https://github.com/rh-ai-quickstart/agentic-partners-integration.git
 	branch = aro
+[submodule "quickstart/self-improving-retrieval-for-rag-and-ai-agents"]
+	path = quickstart/self-improving-retrieval-for-rag-and-ai-agents
+	url = https://github.com/rh-ai-quickstart/self-improving-retrieval-for-rag-and-ai-agents.git
