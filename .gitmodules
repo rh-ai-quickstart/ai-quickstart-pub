@@ -110,3 +110,6 @@
 	path = quickstart/agentic-partners-integration
 	url = https://github.com/rh-ai-quickstart/agentic-partners-integration.git
 	branch = aro
+[submodule "quickstart/helpdesk-email-triage"]
+	path = quickstart/helpdesk-email-triage
+	url = https://github.com/rh-ai-quickstart/helpdesk-email-triage.git
