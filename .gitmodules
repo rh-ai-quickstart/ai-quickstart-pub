@@ -113,3 +113,6 @@
 [submodule "quickstart/helpdesk-email-triage"]
 	path = quickstart/helpdesk-email-triage
 	url = https://github.com/rh-ai-quickstart/helpdesk-email-triage.git
+[submodule "quickstart/self-improving-retrieval-for-rag-and-ai-agents"]
+	path = quickstart/self-improving-retrieval-for-rag-and-ai-agents
+	url = https://github.com/rh-ai-quickstart/self-improving-retrieval-for-rag-and-ai-agents.git
