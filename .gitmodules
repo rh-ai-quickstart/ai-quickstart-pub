@@ -116,3 +116,6 @@
 [submodule "quickstart/self-improving-retrieval-for-rag-and-ai-agents"]
 	path = quickstart/self-improving-retrieval-for-rag-and-ai-agents
 	url = https://github.com/rh-ai-quickstart/self-improving-retrieval-for-rag-and-ai-agents.git
+[submodule "quickstart/confidential-gpu-accelerated-seismic-interpretation"]
+	path = quickstart/confidential-gpu-accelerated-seismic-interpretation
+	url = https://github.com/rh-ai-quickstart/confidential-gpu-accelerated-seismic-interpretation
